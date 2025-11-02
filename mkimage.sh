@@ -46,7 +46,7 @@ BOOT_OTA="ota"
 
     if [ ! -f $OUT/kernel ]
     then
-	    echo "kernel image not fount![$OUT/kernel] "
+	    echo "kernel image not found![$OUT/kernel] "
         read -p "copy kernel from TARGET_PREBUILT_KERNEL[$KERNEL_SRC_PATH] (y/n) n to exit?"
         if [ "$REPLY" == "y" ]
         then
@@ -140,7 +140,7 @@ if [ "$HIGH_RELIABLE_RECOVERY_OTA" = "true" ]; then
 		cp -a $UBOOT_PATH/uboot_ro.img $IMAGE_PATH/uboot_ro.img
 		echo "done."
 	else
-		echo "$UBOOT_PATH/uboot_ro.img not fount! Please make it from $UBOOT_PATH first!"
+		echo "$UBOOT_PATH/uboot_ro.img not found! Please make it from $UBOOT_PATH first!"
 	fi
 fi
 
@@ -153,7 +153,7 @@ else
 		echo "create loader..."
 		cp -a $UBOOT_PATH/*loader*.bin $IMAGE_PATH/MiniLoaderAll.bin
 	else
-        echo "$UBOOT_PATH/*MiniLoaderAll_*.bin not fount! Please make it from $UBOOT_PATH first!"
+        echo "$UBOOT_PATH/*MiniLoaderAll_*.bin not found! Please make it from $UBOOT_PATH first!"
 	fi
 fi
 fi
@@ -163,7 +163,7 @@ then
     echo "create config.cfg..."
     cp -a $FLASH_CONFIG_FILE $IMAGE_PATH/config.cfg
 else
-    echo "$FLASH_CONFIG_FILE not fount!"
+    echo "$FLASH_CONFIG_FILE not found!"
 fi
 
 if [ -f $PARAMETER ]
@@ -175,7 +175,7 @@ then
 						cp -a ${TARGET_DEVICE_DIR}/parameter_hrr.txt $IMAGE_PATH/parameter.txt
 						echo "done."
 	        else
-						echo "${TARGET_DEVICE_DIR}/parameter_hrr.txt not fount! Please make it from ${TARGET_DEVICE_DIR} first!"
+						echo "${TARGET_DEVICE_DIR}/parameter_hrr.txt not found! Please make it from ${TARGET_DEVICE_DIR} first!"
 	        fi
 	      else
 					echo -n "create parameter..."
@@ -186,7 +186,7 @@ else
     if [ -f $OUT/parameter.txt ]; then
         cp -a $OUT/parameter.txt $IMAGE_PATH/parameter.txt
     else
-        echo "$PARAMETER not fount!"
+        echo "$PARAMETER not found!"
     fi
 fi
 
@@ -212,7 +212,7 @@ then
         cp -a $TARGET_BASE_PARAMETER_IMAGE $IMAGE_PATH/baseparameter.img
         echo "done."
     else
-        echo "$TARGET_BASE_PARAMETER_IMAGE not fount!"
+        echo "$TARGET_BASE_PARAMETER_IMAGE not found!"
     fi
 fi
 

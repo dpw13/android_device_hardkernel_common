@@ -16,12 +16,15 @@
 
 ifeq ($(strip $(BOARD_AVB_ENABLE)),true)
 # Only copy gsi_keys for Android 10+, Android 9 use system as root.
-ifeq ($(call math_gt_or_eq,$(ROCKCHIP_LUNCHING_API_LEVEL),29),true)
+# TODO: This variable for some reason isn't accessible during makefile init?
+ifdef PRODUCT_SHIPPING_API_LEVEL
+ifeq ($(call math_gt_or_eq,$(PRODUCT_SHIPPING_API_LEVEL),29),true)
 #$(call inherit-product, $(SRC_TARGET_DIR)/product/gsi_keys.mk)
 PRODUCT_PACKAGES += \
     r-gsi.avbpubkey \
     s-gsi.avbpubkey \
     t-gsi.avbpubkey
+endif
 endif
 
 PRODUCT_COPY_FILES += \
@@ -60,7 +63,7 @@ BOARD_AVB_RECOVERY_ADD_HASH_FOOTER_ARGS := \
 endif #BOARD_USES_AB_IMAGE
 endif #BOARD_AVB_METADATA_BIN_PATH
 
-ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \>= 4)))
+ifeq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),4),true)
 # Enable chained vbmeta for the boot image.
 # The following can be absent, where the hash descriptor of the
 # 'boot' partition will be stored then signed in vbmeta.img instead.
@@ -69,7 +72,7 @@ BOARD_AVB_BOOT_ALGORITHM := $(BOARD_AVB_ALGORITHM)
 BOARD_AVB_BOOT_ROLLBACK_INDEX ?= $(BOARD_AVB_ROLLBACK_INDEX)
 BOARD_AVB_BOOT_ROLLBACK_INDEX_LOCATION ?= 2
 
-BOOT_OS_VERSION := 13
+BOOT_OS_VERSION := $(PLATFORM_VERSION_LAST_STABLE)
 BOOT_SECURITY_PATCH := $(PLATFORM_SECURITY_PATCH)
 
 BOARD_AVB_VENDOR_BOOT_ADD_HASH_FOOTER_ARGS += $(BOARD_AVB_DEFAULT_ADD_HASH_FOOTER_ARGS)
@@ -92,8 +95,12 @@ BOARD_AVB_RECOVERY_ALGORITHM := $(BOARD_AVB_ALGORITHM)
 #BOARD_AVB_RECOVERY_KEY_PATH ?= external/avb/test/data/testkey_rsa4096.pem
 #BOARD_AVB_RECOVERY_ALGORITHM ?= SHA256_RSA4096
 ifdef BOARD_AVB_ROLLBACK_INDEX
-BOARD_AVB_RECOVERY_ROLLBACK_INDEX ?= $(BOARD_AVB_ROLLBACK_INDEX)
-BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION ?= 2
-endif
+  BOARD_AVB_RECOVERY_ROLLBACK_INDEX ?= $(BOARD_AVB_ROLLBACK_INDEX)
+  ifeq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),4),true)
+    BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION ?= 4
+  else
+    BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION ?= 2
+  endif # BOARD_BOOT_HEADER_VERSION >= 4
+endif # BOARD_AVB_ROLLBACK_INDEX
 endif # BOARD_USES_AB_IMAGE
 endif # BOARD_AVB_ENABLE

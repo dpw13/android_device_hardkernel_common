@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# TODO: does any of this need to be set for m1s?
+
 # odroid doesn't use cmdline from boot.img and recovery.img. It is cared from boot.scr
 ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
 ROCKCHIP_ANDROID_BOOT_CMDLINE ?= androidboot.console=ttyFIQ0 androidboot.wificountrycode=CN
@@ -68,7 +70,7 @@ endif
 endif
 
 # odroid board doesn't use recovery dtbo & dtbo.img
-ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
-BOARD_INCLUDE_RECOVERY_DTBO ?= true
+#ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
+#BOARD_INCLUDE_RECOVERY_DTBO ?= true
 BOARD_INCLUDE_DTB_IN_BOOTIMG ?= true
-endif
+#endif

@@ -11,7 +11,7 @@ SGDISK_HOST=$HOST_OUT/sgdisk
 
 PRODUCT_OUT=`get_build_var PRODUCT_OUT`
 
-if [ -f $TARGET_PATH/uboot.img ]; then
+if [ -f $TARGET_PATH/idbloader.img ]; then
 dd if=$TARGET_PATH/idbloader.img of=$TARGET_IMAGE bs=512 seek=64
 fi
 dd if=$TARGET_PATH/fat.img of=$TARGET_IMAGE bs=512 seek=2048

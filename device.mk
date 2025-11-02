@@ -25,15 +25,33 @@ BOARD_VENDOR_GPU_PLATFORM := midgard
 endif
 
 ifeq ($(strip $(TARGET_ARCH)), arm64)
+# TODO: consider 64_only to reduce image size
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
 endif
 
 PRODUCT_AAPT_CONFIG ?= normal large xlarge hdpi tvdpi xhdpi xxhdpi
 PRODUCT_AAPT_PREF_CONFIG ?= xhdpi
 
+# value: tablet,box,phone,car
+# It indicates whether to be tablet platform or not
+ifneq ($(filter %box, $(TARGET_PRODUCT)), )
+TARGET_BOARD_PLATFORM_PRODUCT ?= box
+else ifneq ($(filter %vr, $(TARGET_PRODUCT)), )
+TARGET_BOARD_PLATFORM_PRODUCT ?= vr
+else ifneq ($(filter %car, $(TARGET_PRODUCT)), )
+TARGET_BOARD_PLATFORM_PRODUCT ?= car
+else
+TARGET_BOARD_PLATFORM_PRODUCT ?= tablet
+endif
+
+ifeq ($(filter atv box, $(strip $(TARGET_BOARD_PLATFORM_PRODUCT))), )
+DEVICE_PACKAGE_OVERLAYS += device/hardkernel/common/overlay
+ifneq ($(BOARD_HAS_RK_4G_MODEM), true)
+DEVICE_PACKAGE_OVERLAYS += device/hardkernel/common/overlay_wifi_only
+endif
+endif
+
 PRODUCT_PACKAGES += \
-    ExactCalculator \
-    OdroidSettings \
     Updater \
     wakeup-alarmalign-whitelist.xml
 
@@ -61,34 +79,147 @@ PRODUCT_PACKAGES += \
     vndservicemanager
 
 # Prebuild apps
-$(call inherit-product, device/hardkernel/common/modules/preinstall.mk)
-$(call inherit-product, device/hardkernel/common/modules/optimize.mk)
-$(call inherit-product, device/hardkernel/common/modules/build_dm.mk)
+#$(call inherit-product, device/hardkernel/common/modules/preinstall.mk)
+#$(call inherit-product, device/hardkernel/common/modules/optimize.mk)
+#$(call inherit-product, device/hardkernel/common/modules/build_dm.mk)
 
 # Inherit product config
 ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), atv)
+  # CTS require faketouch
+  BOARD_USER_FAKETOUCH ?= true
+
   $(call inherit-product, device/google/atv/products/atv_base.mk)
   $(call inherit-product-if-exists, frameworks/base/data/sounds/AllAudio.mk)
+  $(call inherit-product, device/hardkernel/common/modules/rockchip_apps_box.mk)
+
+  #only box and atv using our audio policy(write by rockchip)
+  USE_CUSTOM_AUDIO_POLICY := 1
+  PRODUCT_PACKAGES += \
+      libaudiopolicymanagercustom
+
+  # rktoolbox
+  ifeq ($(strip $(BOARD_WITH_RKTOOLBOX)),true)
+  $(call inherit-product-if-exists, external/rktoolbox/rktoolbox.mk)
+  endif
+
+  # Light AIDL
+  PRODUCT_PACKAGES += \
+      android.hardware.lights \
+      android.hardware.lights-service.rockchip
+
   PRODUCT_PACKAGES += DocumentsUI \
                       PlayAutoInstallConfig \
                       ATVContentProvider \
 
+  PRODUCT_PROPERTY_OVERRIDES += \
+       ro.com.google.clientidbase=android-rockchip-tv
+  PRODUCT_COPY_FILES += \
+       $(LOCAL_PATH)/bootanimation.zip:/system/media/bootanimation.zip
+
 else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), box)
   $(call inherit-product, device/hardkernel/common/tv/tv_base.mk)
-else ifeq ($(strip $(BUILD_WITH_GO_OPT))|$(strip $(TARGET_ARCH)) ,true|arm)
-  # For arm Go tablet.
-  $(call inherit-product, $(SRC_TARGET_DIR)/product/generic_no_telephony.mk)
-  $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
-  $(call inherit-product-if-exists, frameworks/base/data/sounds/AudioPackageGo.mk)
-  PRODUCT_PACKAGES += Launcher3QuickStepGo
-else ifeq ($(strip $(BUILD_WITH_GO_OPT))|$(strip $(TARGET_ARCH)) ,true|arm64)
-  # For arm64 Go tablet
+  $(call inherit-product, device/hardkernel/common/modules/rockchip_apps_box.mk)
+
+  #include device/hardkernel/common/samba/rk31_samba.mk
+  PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/init.box.samba.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.box.samba.rc \
+    device/hardkernel/common/cifsmanager.sh:system/bin/cifsmanager.sh
+
+  PRODUCT_PROPERTY_OVERRIDES += \
+    ro.rk.screenoff_time=2147483647
+
+  DEVICE_PACKAGE_OVERLAYS += device/hardkernel/common/overlay_screenoff
+
+  # enable retriever during video playing
+  PRODUCT_PROPERTY_OVERRIDES += \
+    rt_retriever_enable=1
+
+  # Zoom out recovery ui of box by two percent.
+  TARGET_RECOVERY_OVERSCAN_PERCENT := 2
+  TARGET_BASE_PARAMETER_IMAGE ?= device/hardkernel/common/baseparameter/baseparameter.img
+  # savBaseParameter tool
+  ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
+      PRODUCT_PACKAGES += saveBaseParameter
+  endif
+  DEVICE_FRAMEWORK_MANIFEST_FILE := device/hardkernel/common/manifest_framework_override.xml
+
+else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), car)
+  $(call inherit-product, $(SRC_TARGET_DIR)/product/core_minimal.mk)
+  # lineage/packages/services/Car/car_product/build/car_base.mk inherits from core_minimal
+  # once we're ready to start building car-related software
+  #$(call inherit-product, packages/services/Car/car_product/build/car_generic_system.mk)
+  $(call inherit-product, vendor/lineage/config/common_car.mk)
+
+  PRODUCT_PROPERTY_OVERRIDES += \
+    ro.rk.screenoff_time=2147483647
+
+  DEVICE_PACKAGE_OVERLAYS += device/hardkernel/common/overlay_screenoff
+
+  # Sensor HAL
+  PRODUCT_PACKAGES += \
+      android.hardware.sensors@1.0-service \
+      android.hardware.sensors@1.0-impl \
+      sensors.$(TARGET_BOARD_HARDWARE)
+
+else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), tablet)
+  PRODUCT_PROPERTY_OVERRIDES += \
+      ro.rk.screenoff_time=60000
+
+  PRODUCT_PACKAGES += \
+        SoundRecorder
+
+  # Sensor HAL
+  PRODUCT_PACKAGES += \
+      android.hardware.sensors@1.0-service \
+      android.hardware.sensors@1.0-impl \
+      sensors.$(TARGET_BOARD_HARDWARE)
+
+  # Add runtime resource overlay for framework-res
+  PRODUCT_ENFORCE_RRO_TARGETS := \
+      framework-res
+
+ifneq ($(strip $(BUILD_WITH_GO_OPT)),true)
+    PRODUCT_COPY_FILES += \
+        frameworks/native/data/etc/tablet_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/tablet_core_hardware.xml
+
+ifeq ($(strip $(TARGET_ARCH)),arm)
+      # For arm Go tablet.
+      $(call inherit-product, $(SRC_TARGET_DIR)/product/generic_no_telephony.mk)
+      $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
+      $(call inherit-product-if-exists, frameworks/base/data/sounds/AudioPackageGo.mk)
+else ifeq ($(strip $(TARGET_ARCH)),arm64)
+      # For arm64 Go tablet
+      $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base.mk)
+endif
+
+PRODUCT_PACKAGES += Launcher3QuickStepGo
+
+else # no GO_OPT
+  # Normal tablet, add QuickStep for normal product only.
   $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base.mk)
-  PRODUCT_PACKAGES += Launcher3QuickStepGo
-else
-# Normal tablet, add QuickStep for normal product only.
-  $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base.mk)
-  PRODUCT_PACKAGES += Launcher3QuickStep
+  #PRODUCT_PACKAGES += Launcher3QuickStep
+endif
+  # add this prop to skip vr test for cts-on-gsi in vts
+  PRODUCT_PROPERTY_OVERRIDES += \
+      ro.boot.vr=0
+
+ifneq ($(strip $(BUILD_WITH_GOOGLE_GMS_EXPRESS)),true)
+  PRODUCT_PACKAGES += \
+      Music \
+      WallpaperPicker
+
+  $(call inherit-product, device/hardkernel/common/modules/rockchip_apps.mk)
+
+ifneq ($(BUILD_WITH_GOOGLE_MARKET), true)
+    PRODUCT_PACKAGES += \
+        InProcessNetworkStack \
+        com.android.tethering.inprocess
+
+    # Setup brightness for AOSP tablet devices
+    DEVICE_PACKAGE_OVERLAYS += device/hardkernel/common/overlay_brightness
+endif
+endif # tablet without GMS-Express
+
 endif
 
 # PCBA tools
@@ -149,6 +280,9 @@ PRODUCT_PACKAGES += \
     libwifi-hal-package \
     dhcpcd.conf
 
+# Wifi&Bluetooth
+include device/hardkernel/common/wifi_bt_common.mk
+
 ifeq ($(ROCKCHIP_USE_LAZY_HAL),true)
 PRODUCT_PACKAGES += \
     android.hardware.wifi@1.0-service-lazy
@@ -188,6 +322,12 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml \
     frameworks/av/media/libeffects/data/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml
 
+ifeq ($(BUILD_WITH_GO_OPT), true)
+PRODUCT_FSTAB_TEMPLATE ?= device/hardkernel/common/scripts/fstab_tools/fstab_go.in
+else
+PRODUCT_FSTAB_TEMPLATE ?= device/hardkernel/common/scripts/fstab_tools/fstab.in
+endif
+
 ifndef PRODUCT_FSTAB_TEMPLATE
 $(warning Please add fstab.in with PRODUCT_FSTAB_TEMPLATE in your product.mk)
 # To use fstab auto generator, define fstab.in in your product.mk,
@@ -197,13 +337,13 @@ PRODUCT_COPY_FILES += \
     $(TARGET_DEVICE_DIR)/fstab.odroid:$(TARGET_COPY_OUT_RAMDISK)/fstab.$(TARGET_BOARD_HARDWARE)
 
 # Header V3+, add vendor_boot
-ifeq ($(BOARD_BUILD_GKI),true)
+ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3),)
 PRODUCT_COPY_FILES += \
     $(TARGET_DEVICE_DIR)/fstab.odroid:$(TARGET_COPY_OUT_VENDOR_RAMDISK)/first_stage_ramdisk/fstab.$(TARGET_BOARD_HARDWARE)
 endif
 endif # Use PRODUCT_FSTAB_TEMPLATE
 
-# For audio-recoard 
+# For audio-record
 PRODUCT_PACKAGES += \
     libsrec_jni
 
@@ -216,9 +356,9 @@ $(call inherit-product-if-exists, hardware/rockchip/audio/tinyalsa_hal/codec_con
 
 # SDCardFS deprecate for Android R+
 # https://source.android.google.cn/devices/storage/sdcardfs-deprecate
-ifneq ($(call math_gt_or_eq,$(ROCKCHIP_LUNCHING_API_LEVEL),30),)
+#ifneq ($(call math_gt_or_eq,$(PRODUCT_SHIPPING_API_LEVEL),30),)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
-endif
+#endif
 
 ifeq ($(BOARD_NFC_SUPPORT),true)
 PRODUCT_COPY_FILES += \
@@ -292,14 +432,6 @@ ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), vr)
 else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), laptop)
     PRODUCT_COPY_FILES += \
         frameworks/native/data/etc/laptop_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/laptop_core_hardware.xml
-else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), tablet)
-ifneq ($(strip $(BUILD_WITH_GO_OPT)),true)
-    PRODUCT_COPY_FILES += \
-        frameworks/native/data/etc/tablet_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/tablet_core_hardware.xml
-endif
-# add this prop to skip vr test for cts-on-gsi in vts
-    PRODUCT_PROPERTY_OVERRIDES += \
-        ro.boot.vr=0
 endif
 
 # Live Wallpapers
@@ -308,15 +440,6 @@ PRODUCT_PACKAGES += \
     PhaseBeam \
     librs_jni \
     libjni_pinyinime
-
-ifeq ($(filter tablet atv, $(strip $(TARGET_BOARD_PLATFORM_PRODUCT))), )
-# Sensor HAL
-PRODUCT_PACKAGES += \
-    android.hardware.sensors@1.0-service \
-    android.hardware.sensors@1.0-impl \
-    sensors.$(TARGET_BOARD_HARDWARE)
-
-endif
 
 # Include thermal HAL module
 $(call inherit-product, device/hardkernel/common/modules/thermal.mk)
@@ -352,13 +475,6 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     akmd
-
-# Light AIDL
-ifneq ($(TARGET_BOARD_PLATFORM_PRODUCT), atv)
-PRODUCT_PACKAGES += \
-    android.hardware.lights \
-    android.hardware.lights-service.rockchip
-endif
 
 ifeq ($(strip $(BOARD_SUPER_PARTITION_GROUPS)),rockchip_dynamic_partitions)
 # Fastbootd HAL
@@ -667,19 +783,6 @@ PRODUCT_COPY_FILES += \
 endif
 
 
-ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), box)
-    #include device/hardkernel/common/samba/rk31_samba.mk
-    PRODUCT_COPY_FILES += \
-      $(LOCAL_PATH)/init.box.samba.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.box.samba.rc \
-      device/hardkernel/common/cifsmanager.sh:system/bin/cifsmanager.sh
-
-    PRODUCT_PROPERTY_OVERRIDES += \
-      ro.rk.screenoff_time=2147483647
-else
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.rk.screenoff_time=60000
-endif
-
 # incrementalfs config
 $(call inherit-product-if-exists, vendor/rockchip/common/modular_kernel/4.19/incrementalfs.mk)
 
@@ -705,12 +808,6 @@ PRODUCT_PROPERTY_OVERRIDES +=               \
     ro.config.enable.skipverify=true
 endif
 
-# rktoolbox
-ifneq ($(filter atv box, $(strip $(TARGET_BOARD_PLATFORM_PRODUCT))), )
-ifeq ($(strip $(BOARD_WITH_RKTOOLBOX)),true)
-$(call inherit-product-if-exists, external/rktoolbox/rktoolbox.mk)
-endif
-endif
 #hdmi cec
 ifeq ($(BOARD_SUPPORT_HDMI_CEC),true)
   $(call inherit-product, device/hardkernel/common/modules/hdmi_cec.mk)
@@ -784,13 +881,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_FULL_TREBLE_OVERRIDE := true
 #PRODUCT_COMPATIBILITY_MATRIX_LEVEL_OVERRIDE := 27
 
-# Add runtime resource overlay for framework-res
-# TODO disable for box
-ifeq ($(filter atv box, $(strip $(TARGET_BOARD_PLATFORM_PRODUCT))), )
-PRODUCT_ENFORCE_RRO_TARGETS := \
-    framework-res
-endif
-
 #The module which belong to vndk-sp is defined by google
 PRODUCT_PACKAGES += \
     android.hardware.renderscript@1.0.vndk-sp\
@@ -818,46 +908,6 @@ PRODUCT_PACKAGES += \
     liblzma.vndk-sp\
 
 #######for target product ########
-ifeq ($(TARGET_BOARD_PLATFORM_PRODUCT),box)
-  DEVICE_PACKAGE_OVERLAYS += device/hardkernel/common/overlay_screenoff
-
-  $(call inherit-product, device/hardkernel/common/modules/rockchip_apps_box.mk)
-
-else ifeq ($(TARGET_BOARD_PLATFORM_PRODUCT),atv)
-  PRODUCT_PROPERTY_OVERRIDES += \
-       ro.com.google.clientidbase=android-rockchip-tv
-  PRODUCT_COPY_FILES += \
-       $(LOCAL_PATH)/bootanimation.zip:/system/media/bootanimation.zip
-
-  $(call inherit-product, device/hardkernel/common/modules/rockchip_apps_box.mk)
-
-else # tablet
-  PRODUCT_PACKAGES += \
-        SoundRecorder
-ifneq ($(strip $(BUILD_WITH_GOOGLE_GMS_EXPRESS)),true)
-PRODUCT_PACKAGES += \
-    Music \
-    WallpaperPicker
-
-$(call inherit-product, device/hardkernel/common/modules/rockchip_apps.mk)
-
-ifneq ($(BUILD_WITH_GOOGLE_MARKET), true)
-PRODUCT_PACKAGES += \
-    InProcessNetworkStack \
-    com.android.tethering.inprocess
-
-# Setup brightness for AOSP devices
-DEVICE_PACKAGE_OVERLAYS += device/hardkernel/common/overlay_brightness
-endif
-endif # tablet without GMS-Express
-endif
-
-#only box and atv using our audio policy(write by rockchip)
-ifneq ($(filter atv, $(strip $(TARGET_BOARD_PLATFORM_PRODUCT))), )
-USE_CUSTOM_AUDIO_POLICY := 1
-PRODUCT_PACKAGES += \
-    libaudiopolicymanagercustom
-endif
 
 # By default, enable zram; experiment can toggle the flag,
 # which takes effect on boot
@@ -889,17 +939,6 @@ PRODUCT_PACKAGES += libstdc++.vendor
 #Build with UiMode Config
 PRODUCT_COPY_FILES += \
     device/hardkernel/common/uimode/package_uimode_config.xml:vendor/etc/package_uimode_config.xml
-
-# Zoom out recovery ui of box by two percent.
-ifneq ($(filter atv box, $(strip $(TARGET_BOARD_PLATFORM_PRODUCT))), )
-    TARGET_RECOVERY_OVERSCAN_PERCENT := 2
-    TARGET_BASE_PARAMETER_IMAGE ?= device/hardkernel/common/baseparameter/baseparameter.img
-    # savBaseParameter tool
-    ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
-        PRODUCT_PACKAGES += saveBaseParameter
-    endif
-    DEVICE_FRAMEWORK_MANIFEST_FILE := device/hardkernel/common/manifest_framework_override.xml
-endif
 
 # add AudioSetting
 PRODUCT_PACKAGES += \
@@ -1007,12 +1046,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.sf.color_saturation=1.0
 
-ifneq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), box)
-# enable retriever during video playing
-PRODUCT_PROPERTY_OVERRIDES += \
-    rt_retriever_enable=1
-endif
-
 ifneq ($(strip $(BUILD_WITH_GO_OPT)),true)
 PRODUCT_PACKAGES += \
 	androidx.window.extensions \
@@ -1031,18 +1064,15 @@ PRODUCT_PACKAGES += \
 
 #wiringPi
 PRODUCT_PACKAGES += \
-    libwiringPi \
-    libwiringPiDev \
     gpio
+#    libwiringPi \
+#    libwiringPiDev \
 
-PRODUCT_COPY_FILES += \
-    device/hardkernel/$(TARGET_BOARD_PLATFORM)/$(TARGET_PRODUCT)/fw_env/fw_env.config:system/etc/fw_env.config
-
-PRODUCT_PACKAGES += \
-    Things \
-    odroidThings \
-    com.google.android.things.xml \
-    vendor.hardkernel.hardware.odroidthings@1.0-service
+#PRODUCT_PACKAGES += \
+#    Things \
+#    odroidThings \
+#    com.google.android.things.xml \
+#    vendor.hardkernel.hardware.odroidthings@1.0-service
 
 PRODUCT_PACKAGES += \
     Rtc \
@@ -1061,8 +1091,16 @@ PRODUCT_PACKAGES += \
     gps.$(TARGET_BOOTLOADER_BOARD_NAME)
 
 PRODUCT_PACKAGES += \
-    KIOSK_Demo \
-    WifiOverlay
+    system_compatibility_matrix.xml \
+    system_manifest.xml \
+    product_compatibility_matrix.xml \
+    product_manifest.xml \
+    vendor_compatibility_matrix.xml \
+    vendor_manifest.xml \
 
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.bt.service.down=true
+#PRODUCT_PACKAGES += \
+#    KIOSK_Demo \
+#    WifiOverlay
+
+#PRODUCT_PROPERTY_OVERRIDES += \
+#    persist.bt.service.down=true

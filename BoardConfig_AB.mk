@@ -14,14 +14,17 @@
 # limitations under the License.
 #
 
+# TODO: this is probably better as build/rockchip/Partitions_AB.mk
+
 AB_OTA_UPDATER := true
 TARGET_NO_RECOVERY := true
 
 BOARD_BOOT_HEADER_VERSION ?= 2
-BOARD_USES_RECOVERY_AS_BOOT := true
-ifeq ($(BOARD_BUILD_GKI),true)
-BOARD_USES_RECOVERY_AS_BOOT :=
-endif
+# TODO: not clear what this option should be, but it should not depend on GKI
+#BOARD_USES_RECOVERY_AS_BOOT := true
+#ifeq ($(BOARD_BUILD_GKI),true)
+#BOARD_USES_RECOVERY_AS_BOOT :=
+#endif
 
 USE_AB_PARAMETER := $(shell test -f $(TARGET_DEVICE_DIR)/parameter_ab.txt && echo true)
 ifeq ($(strip $(USE_AB_PARAMETER)), true)
@@ -29,14 +32,14 @@ ifeq ($(strip $(USE_AB_PARAMETER)), true)
         ifeq ($(PRODUCT_RETROFIT_DYNAMIC_PARTITIONS), true)
             BOARD_SUPER_PARTITION_METADATA_DEVICE := system
             BOARD_SUPER_PARTITION_BLOCK_DEVICES := system vendor odm
-            BOARD_SUPER_PARTITION_SYSTEM_DEVICE_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt system_a)
-            BOARD_SUPER_PARTITION_VENDOR_DEVICE_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt vendor_a)
-            BOARD_SUPER_PARTITION_ODM_DEVICE_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt odm_a)
+            BOARD_SUPER_PARTITION_SYSTEM_DEVICE_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt system_a)
+            BOARD_SUPER_PARTITION_VENDOR_DEVICE_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt vendor_a)
+            BOARD_SUPER_PARTITION_ODM_DEVICE_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt odm_a)
 
             BOARD_SUPER_PARTITION_SIZE := $(shell expr $(BOARD_SUPER_PARTITION_SYSTEM_DEVICE_SIZE) + $(BOARD_SUPER_PARTITION_VENDOR_DEVICE_SIZE) + $(BOARD_SUPER_PARTITION_ODM_DEVICE_SIZE))
             BOARD_ROCKCHIP_DYNAMIC_PARTITIONS_SIZE := $(shell expr $(BOARD_SUPER_PARTITION_SIZE) - 4194304)
         else
-            BOARD_SUPER_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt super)
+            BOARD_SUPER_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt super)
             ifeq ($(BOARD_ROCKCHIP_VIRTUAL_AB_ENABLE), true)
                 BOARD_ROCKCHIP_DYNAMIC_PARTITIONS_SIZE := $(shell expr $(BOARD_SUPER_PARTITION_SIZE) - 4194304)
             else
@@ -44,16 +47,16 @@ ifeq ($(strip $(USE_AB_PARAMETER)), true)
             endif
         endif
     else
-        BOARD_SYSTEMIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt system_a)
-        BOARD_VENDORIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt vendor_a)
-        BOARD_ODMIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt odm_a)
+        BOARD_SYSTEMIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt system_a)
+        BOARD_VENDORIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt vendor_a)
+        BOARD_ODMIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt odm_a)
     endif
-    BOARD_CACHEIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt cache)
-    BOARD_BOOTIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt boot_a)
-    BOARD_DTBOIMG_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt dtbo_a)
+    BOARD_CACHEIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt cache)
+    BOARD_BOOTIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt boot_a)
+    BOARD_DTBOIMG_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt dtbo_a)
     # Header V3, add vendor_boot
-    ifeq ($(BOARD_BUILD_GKI),true)
-        BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt vendor_boot_a)
+    ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3),)
+        BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter_ab.txt vendor_boot_a)
     endif
     #$(info Calculated BOARD_SYSTEMIMAGE_PARTITION_SIZE=$(BOARD_SYSTEMIMAGE_PARTITION_SIZE) use $(TARGET_DEVICE_DIR)/parameter_ab.txt)
 else
@@ -74,10 +77,15 @@ else
                 BOARD_SUPER_PARTITION_SIZE := 5372903424
                 BOARD_ROCKCHIP_DYNAMIC_PARTITIONS_SIZE := $(shell expr $(BOARD_SUPER_PARTITION_SIZE) / 2 - 4194304)
             endif
-            ifneq ($(BOARD_BUILD_GKI),true)
-                BOARD_BOOTIMAGE_PARTITION_SIZE := 100663296
-            endif
         endif
+    endif
+    ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3),)
+        # init_boot partition size is recommended to be 8MB, it can be larger.
+        # When this variable is set, init_boot.img will be built with the generic
+        # ramdisk, and that ramdisk will no longer be included in boot.img.
+        BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE := 8388608
+    else
+        BOARD_BOOTIMAGE_PARTITION_SIZE := 100663296
     endif
 endif
 TARGET_RECOVERY_FSTAB := $(TARGET_DEVICE_DIR)/recovery.fstab_AB

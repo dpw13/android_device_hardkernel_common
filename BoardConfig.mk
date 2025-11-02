@@ -13,28 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-#binder protocol(8)
-TARGET_USES_64_BIT_BINDER := true
 TARGET_BOARD_PLATFORM ?= rk3568
 TARGET_BOARD_HARDWARE ?= odroid
-PRODUCT_KERNEL_VERSION ?= 4.19
-PRODUCT_KERNEL_PATH ?= kernel-$(PRODUCT_KERNEL_VERSION)
-
-# value: tablet,box,phone
-# It indicates whether to be tablet platform or not
-
-# Export this prop for Mainline Modules.
-ROCKCHIP_LUNCHING_API_LEVEL := $(PRODUCT_SHIPPING_API_LEVEL)
-
-ifneq ($(filter %box, $(TARGET_PRODUCT)), )
-TARGET_BOARD_PLATFORM_PRODUCT ?= box
-else
-ifneq ($(filter %vr, $(TARGET_PRODUCT)), )
-TARGET_BOARD_PLATFORM_PRODUCT ?= vr
-else
-TARGET_BOARD_PLATFORM_PRODUCT ?= tablet
-endif
-endif
+PRODUCT_KERNEL_VERSION ?= 6.1
 
 TARGET_ARCH ?= arm
 TARGET_ARCH_VARIANT ?= armv7-a-neon
@@ -48,15 +29,15 @@ BOARD_PLATFORM_VERSION := 12.0
 
 # Enable android verified boot 2.0
 BOARD_AVB_ENABLE ?= false
-ifeq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
-BOARD_BOOT_HEADER_VERSION ?= 1
-else
-BOARD_BOOT_HEADER_VERSION ?= 2
-endif
-BOARD_MKBOOTIMG_ARGS :=
-ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
-BOARD_PREBUILT_DTBOIMAGE ?= $(TARGET_DEVICE_DIR)/dtbo.img
-endif
+#ifeq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
+#BOARD_BOOT_HEADER_VERSION ?= 1
+#else
+#BOARD_BOOT_HEADER_VERSION ?= 2
+#endif
+#BOARD_MKBOOTIMG_ARGS :=
+#ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
+#BOARD_PREBUILT_DTBOIMAGE ?= $(TARGET_DEVICE_DIR)/dtbo.img
+#endif
 BOARD_ROCKCHIP_VIRTUAL_AB_ENABLE ?= false
 BOARD_SELINUX_ENFORCING ?= false
 PRODUCT_KERNEL_ARCH ?= arm
@@ -75,18 +56,16 @@ include device/hardkernel/common/build/rockchip/Partitions.mk
 
 # Use the non-open-source parts, if they're present
 ifeq ($(PRODUCT_KERNEL_ARCH), arm)
-TARGET_PREBUILT_KERNEL ?= $(PRODUCT_KERNEL_PATH)/arch/arm/boot/zImage
-ifeq ($(strip $(BOARD_INCLUDE_DTB_IN_BOOTIMG)), true)
-BOARD_PREBUILT_DTBIMAGE_DIR ?= $(PRODUCT_KERNEL_PATH)/arch/arm/boot/dts
-endif
-else
-TARGET_PREBUILT_KERNEL ?= $(PRODUCT_KERNEL_PATH)/arch/arm64/boot/Image
-ifeq ($(strip $(BOARD_INCLUDE_DTB_IN_BOOTIMG)), true)
-BOARD_PREBUILT_DTBIMAGE_DIR ?= $(PRODUCT_KERNEL_PATH)/arch/arm64/boot/dts/rockchip
-endif
+  # build/tasks/kernel.mk says BOARD_KERNEL_IMAGE_NAME should include "-dtb" to
+  # the image name if including the DTB, but this appears to be obsolete.
+  # Instead, it looks like BOARD_KERNEL_APPEND_DTBS can be used to do this automatically
+  # but it doesn't appear to be actually used anywhere.
+  BOARD_KERNEL_IMAGE_NAME ?= zImage
+else # arm64
+  BOARD_KERNEL_IMAGE_NAME ?= Image.gz
 endif
 
-TARGET_PREBUILT_RESOURCE ?= $(PRODUCT_KERNEL_PATH)/resource.img
+TARGET_PREBUILT_RESOURCE ?= $(TARGET_KERNEL_SOURCE)/resource.img
 PRODUCT_PARAMETER_TEMPLATE ?= device/hardkernel/common/scripts/parameter_tools/parameter.in
 PRODUCT_BOOTSCRIPT_TEMPLATE ?= device/hardkernel/common/scripts/bootscript_tools/bootscript.in
 PRODUCT_BOOTSCRIPT_INI_DTB_TEMPLATE := device/hardkernel/common/scripts/bootscript_tools/bootscript_dtb_ini.in
@@ -95,23 +74,18 @@ TARGET_BOARD_HARDWARE_EGL ?= mali
 #Android GO configuration
 BUILD_WITH_GO_OPT ?= false
 
-ifeq ($(BUILD_WITH_GO_OPT), true)
-PRODUCT_FSTAB_TEMPLATE ?= device/hardkernel/common/scripts/fstab_tools/fstab_go.in
-else
-PRODUCT_FSTAB_TEMPLATE ?= device/hardkernel/common/scripts/fstab_tools/fstab.in
-endif
-
 # default.prop & build.prop split
 BOARD_PROPERTY_OVERRIDES_SPLIT_ENABLED ?= true
 
-DEVICE_MANIFEST_FILE ?= device/hardkernel/common/manifests/manifest_level_$(ROCKCHIP_LUNCHING_API_LEVEL).xml
-ifeq (1,$(strip $(shell expr $(ROCKCHIP_LUNCHING_API_LEVEL) \>= 31)))
+DEVICE_MANIFEST_FILE ?= device/hardkernel/common/manifests/manifest_level_$(PRODUCT_SHIPPING_API_LEVEL).xml
+# TODO: this line appears to be causing `expr` syntax errors if inherit-product appears before it
+#ifeq (1,$(strip $(shell expr $(PRODUCT_SHIPPING_API_LEVEL) \>= 31)))
 # Android S deprecate schedulerservice, use ioprio in init.rc
 DEVICE_MATRIX_FILE   ?= device/hardkernel/common/manifests/compatibility_matrix_level_31.xml
-else
+#else
 # For Android R and older versions.
-DEVICE_MATRIX_FILE   ?= device/hardkernel/common/manifests/compatibility_matrix.xml
-endif
+#DEVICE_MATRIX_FILE   ?= device/hardkernel/common/manifests/compatibility_matrix.xml
+#endif
 
 # GPU configration
 TARGET_BOARD_PLATFORM_GPU ?= mali-t760
@@ -165,16 +139,10 @@ VENDOR_SECURITY_PATCH := $(PLATFORM_SECURITY_PATCH)
 
 TARGET_BOOTLOADER_BOARD_NAME ?= rk30sdk
 TARGET_NO_BOOTLOADER ?= true
-ifeq ($(filter atv box, $(strip $(TARGET_BOARD_PLATFORM_PRODUCT))), )
-DEVICE_PACKAGE_OVERLAYS += device/hardkernel/common/overlay
-ifneq ($(BOARD_HAS_RK_4G_MODEM), true)
-DEVICE_PACKAGE_OVERLAYS += device/hardkernel/common/overlay_wifi_only
-endif
-endif
 
 TARGET_RELEASETOOLS_EXTENSIONS := device/hardkernel/common
 
-//MAX-SIZE=512M, for generate out/.../system.img
+# MAX-SIZE=512M, for generate out/.../system.img
 BOARD_FLASH_BLOCK_SIZE := 131072
 
 
@@ -192,7 +160,7 @@ BOARD_HAS_FLIPPED_SCREEN ?= false
 RECOVERY_AUTO_USB_UPDATE ?= false
 
 # To use bmp as kernel logo, uncomment the line below to use bgra 8888 in recovery
-TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
+TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 TARGET_ROCKCHIP_PCBATEST ?= false
 #TARGET_RECOVERY_UI_LIB ?= librecovery_ui_$(TARGET_PRODUCT)
 
@@ -208,6 +176,9 @@ BUILD_WITH_DRMSERVICE :=true
 BOARD_USES_GENERIC_AUDIO ?= true
 
 # Wifi&Bluetooth
+# TODO: split wifi_bt_common into BoardConfig and device versions
+# We need to set some board variables but we also need to add to
+# PRODUCT_CFI_INCLUDE_PATHS which can only be done from the device side.
 include device/hardkernel/common/wifi_bt_common.mk
 
 #Camera flash
@@ -349,18 +320,6 @@ PRODUCT_HAVE_DLNA ?= false
 
 #USE_CLANG_PLATFORM_BUILD ?= true
 
-# Android Q, move to device.mk since we can not change PRODUCT_PACKAGES in BoardConfig.mk
-# Zoom out recovery ui of box by two percent.
-#ifneq ($(filter atv box, $(strip $(TARGET_BOARD_PLATFORM_PRODUCT))), )
-#    TARGET_RECOVERY_OVERSCAN_PERCENT := 2
-#    TARGET_BASE_PARAMETER_IMAGE ?= device/hardkernel/common/baseparameter/baseparameter_fb720.img
-    # savBaseParameter tool
-#    ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
-#        PRODUCT_PACKAGES += saveBaseParameter
-#    endif
-#    DEVICE_FRAMEWORK_MANIFEST_FILE := device/hardkernel/common/manifest_framework_override.xml
-#endif
-
 #enable cpusets sched policy
 ENABLE_CPUSETS := true
 
@@ -372,11 +331,6 @@ TARGET_USES_HWC2 ?= true
 
 # for gralloc 0.3
 TARGET_RK_GRALLOC_VERSION ?= 1
-
-# CTS require faketouch
-ifneq ($(TARGET_BOARD_PLATFORM_PRODUCT), atv)
-BOARD_USER_FAKETOUCH ?= true
-endif
 
 # disable BOARD_SUPPORT_MULTIAUDIO default
 BOARD_SUPPORT_MULTIAUDIO ?= false
@@ -411,6 +365,10 @@ ifeq ($(strip $(BOARD_BASEPARAMETER_SUPPORT)), true)
     endif
         BOARD_WITH_SPECIAL_PARTITIONS := baseparameter:1M
 endif
+
+# Export these makefile variables to soong config vars for graphics libs build rules
+$(call soong_config_set,rockchip,gralloc_version,$(TARGET_RK_GRALLOC_VERSION))
+$(call soong_config_set,rockchip,platform_gpu,$(TARGET_BOARD_PLATFORM_GPU))
 
 ifneq ("$(wildcard vendor/gapps/arm64/arm64-vendor.mk)","")
 #PRODUCT_BROKEN_VERIFY_USES_LIBRARIES := true

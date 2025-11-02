@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import os
 import re
@@ -144,8 +144,8 @@ def main(argv):
                                 libfile = include_apklib_path + '/' + string[1]
                                 MY_LOCAL_PREBUILT_JNI_LIBS += '\t' + 'lib/arm' + '/' + string[1] + '\\' + '\n'
                                 if(os.path.isdir(libfile)):
-				        continue
-				else:
+                                        continue
+                                else:
                                     includelib = file(libfile,'w')
                                     includelib.write(data)
                     tmp_jni_libs = '\\' + '\n'

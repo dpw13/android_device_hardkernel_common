@@ -39,28 +39,29 @@ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE ?= ext4
 # Add standalone metadata partition
 BOARD_USES_METADATA_PARTITION ?= true
 
+# TODO: if we calculate these sizes from parameter.txt, where is the source of truth?
 #Calculate partition size from parameter.txt
 USE_DEFAULT_PARAMETER := $(shell test -f $(TARGET_DEVICE_DIR)/parameter.txt && echo true)
 ifeq ($(strip $(USE_DEFAULT_PARAMETER)), true)
   ifeq ($(PRODUCT_USE_DYNAMIC_PARTITIONS), true)
-    BOARD_SUPER_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt super)
+    BOARD_SUPER_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt super)
     BOARD_ROCKCHIP_DYNAMIC_PARTITIONS_SIZE := $(shell expr $(BOARD_SUPER_PARTITION_SIZE) - 4194304)
   else
-    BOARD_SYSTEMIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt system)
-    BOARD_VENDORIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt vendor)
-    BOARD_ODMIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt odm)
+    BOARD_SYSTEMIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt system)
+    BOARD_VENDORIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt vendor)
+    BOARD_ODMIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt odm)
   endif
-  BOARD_CACHEIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt cache)
-  BOARD_BOOTIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt boot)
-ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
-  BOARD_DTBOIMG_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt dtbo)
-else
-  BOARD_DTBIMG_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt dtb)
-endif
-  BOARD_RECOVERYIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt recovery)
+  BOARD_CACHEIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt cache)
+  BOARD_BOOTIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt boot)
+  ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
+    BOARD_DTBOIMG_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt dtbo)
+  else
+    BOARD_DTBIMG_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt dtb)
+  endif
+  BOARD_RECOVERYIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt recovery)
   # Header V3, add vendor_boot
-  ifeq ($(BOARD_BUILD_GKI),true)
-    BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := $(shell python device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt vendor_boot)
+  ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3),)
+    BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := $(shell python3 device/hardkernel/common/get_partition_size.py $(TARGET_DEVICE_DIR)/parameter.txt vendor_boot)
   endif
   #$(info Calculated BOARD_SYSTEMIMAGE_PARTITION_SIZE=$(BOARD_SYSTEMIMAGE_PARTITION_SIZE) use $(TARGET_DEVICE_DIR)/parameter.txt)
 else
@@ -76,24 +77,30 @@ else
     BOARD_VENDORIMAGE_PARTITION_SIZE ?= 536870912
     BOARD_ODMIMAGE_PARTITION_SIZE ?= 134217728
   endif
-ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
-  BOARD_CACHEIMAGE_PARTITION_SIZE ?= 402653184
-else
-  BOARD_CACHEIMAGE_PARTITION_SIZE ?= 1073741824
-endif
+  ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
+    BOARD_CACHEIMAGE_PARTITION_SIZE ?= 402653184
+  else
+    BOARD_CACHEIMAGE_PARTITION_SIZE ?= 1073741824
+  endif
   BOARD_RECOVERYIMAGE_PARTITION_SIZE ?= 100663296
-ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
-  BOARD_DTBOIMG_PARTITION_SIZE ?= 4194304
-else
+  ifeq ($(BOARD_AVB_ENABLE),true)
+    BOARD_DTBOIMG_PARTITION_SIZE ?= 4194304
+  endif
+  # TODO: not clear that this variable is actually used
   BOARD_DTBIMG_PARTITION_SIZE ?= 4194304
-endif
   # Header V3, add vendor_boot
-  ifeq ($(BOARD_BUILD_GKI),true)
+  ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3),)
     BOARD_BOOTIMAGE_PARTITION_SIZE ?= 67108864
-    BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE ?= 41943040
+    BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE ?= 67108864
     BOARD_RESOURCEIMAGE_PARTITION_SIZE ?= 16777216
   else
     BOARD_BOOTIMAGE_PARTITION_SIZE ?= 41943040
+  endif
+  ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),4),)
+      # init_boot partition size is recommended to be 8MB, it can be larger.
+      # When this variable is set, init_boot.img will be built with the generic
+      # ramdisk, and that ramdisk will no longer be included in boot.img.
+      BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE := 8388608
   endif
   ifneq ($(strip $(TARGET_DEVICE_DIR)),)
     #$(info $(TARGET_DEVICE_DIR)/parameter.txt not found! Use default BOARD_SYSTEMIMAGE_PARTITION_SIZE=$(BOARD_SYSTEMIMAGE_PARTITION_SIZE))

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import getopt
 import os
@@ -29,11 +29,11 @@ def main(argv):
             print (usage)
             sys.exit(2)
         elif opt == "--input":
-            infile = arg;
+            infile = arg
         elif opt == "--input_subscript":
-            in_subscript_file = arg;
+            in_subscript_file = arg
         elif opt == "--variant":
-            variant= arg;
+            variant= arg
         elif opt == "--boot-part":
             boot_part = arg
         elif opt == "--recovery-part":

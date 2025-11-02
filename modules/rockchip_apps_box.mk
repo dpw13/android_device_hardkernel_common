@@ -15,7 +15,7 @@
 #
 
 #begin Add Rockchip BOX/ATV Apps
-ifeq ($(TARGET_BOARD_PLATFORM_PRODUCT),box)
+ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)),box)
 PRODUCT_PACKAGES := \
     RKUpdateService \
     RKDeviceTest \

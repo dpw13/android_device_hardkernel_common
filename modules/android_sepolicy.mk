@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-PRODUCT_SEPOLICY_SPLIT := true
 BOARD_SEPOLICY_DIRS := \
     device/hardkernel/common/sepolicy/vendor \
     device/hardkernel/$(TARGET_BOARD_PLATFORM)/sepolicy_vendor
@@ -23,7 +22,7 @@ SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS ?= \
     device/hardkernel/common/sepolicy/private \
     device/hardkernel/$(TARGET_BOARD_PLATFORM)/sepolicy
 
-ifeq ($(TARGET_BOARD_PLATFORM_PRODUCT),box)
+ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)),box)
     BOARD_SEPOLICY_DIRS += \
         device/hardkernel/common/box/sepolicy/vendor
 endif

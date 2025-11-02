@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import getopt
 import os
@@ -8,7 +8,7 @@ usage = 'Invalid Parameters! Example:\nparameter_tools --firmware-version 10.0 -
 
 # size: K/M/G
 # return int
-def calculate_blocks(size):
+def calculate_blocks(size: str) -> int:
     level = size[-1]
     part_size = int(size[:-1])
     if level == 'K':
@@ -20,10 +20,10 @@ def calculate_blocks(size):
     else:
         part_size = int(size)
     # convert to blocks
-    return part_size / 512
+    return part_size // 512
 
 # return end blocks pos
-def generate_pt(pt_name,pt_size,pt_start):
+def generate_pt(pt_name: str, pt_size: str, pt_start: int):
     part_start = "{:#010x}".format(pt_start)
     if pt_name == 'userdata':
         part_size = '-'
@@ -51,44 +51,44 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, "h", ["input=","start-offset=","firmware-version=","machine-model=","machine-id=","manufacturer=","magic=","atag=","machine=","check-mask=","pwr-hld=","partition-list=","output="])
     except getopt.GetoptError:
-        print (usage)
-        sys.exit(2)
+        print(usage)
+        raise
     for opt, arg in opts:
         if opt == '-h':
-            print (usage)
+            print(usage)
             sys.exit(2)
         elif opt == "--input":
-            ifile = arg;
+            ifile = arg
         elif opt == "--start-offset":
-            start_offset = arg;
+            start_offset = arg
         elif opt == "--firmware-version":
-            firmware_version = arg;
+            firmware_version = arg
         elif opt == "--machine":
             machine = arg
         elif opt == "--machine-model":
-            machine_model = arg;
+            machine_model = arg
         elif opt == "--machine-id":
-            machine_id = arg;
+            machine_id = arg
         elif opt == "--manufacturer":
-            manufacturer = arg;
+            manufacturer = arg
         elif opt == "--magic":
-            magic = arg;
+            magic = arg
         elif opt == "--atag":
-            atag = arg;
+            atag = arg
         elif opt == "--check-mask":
-            check_mask = arg;
+            check_mask = arg
         elif opt == "--pwr-hld":
-            pwr_hld = arg;
+            pwr_hld = arg
         elif opt == "--partition-list":
-            partition_list = arg;
+            partition_list = arg
         elif opt == "--output":
-            ofile = arg;
+            ofile = arg
         else:
-            print (usage)
+            print(usage)
             sys.exit(2)
 
     if partition_list == '':
-        print (usage)
+        print(usage)
         sys.exit(2)
     # append '_b' parts if '_a' is exists.
     list_partitions = partition_list.split(',')
@@ -121,7 +121,7 @@ def main(argv):
         with open(ofile,"w") as f:
             f.write(line)
     else:
-        print (line)
+        print(line)
 
 if __name__=="__main__":
     main(sys.argv[1:])

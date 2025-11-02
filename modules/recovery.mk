@@ -29,13 +29,12 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     update_engine_client
 
+# TODO: uboot removed for now
 AB_OTA_PARTITIONS += \
     boot \
     system	\
-    uboot	\
     vendor	\
-    odm	\
-    dtbo
+    odm
 
 ifneq ($(strip $(BOARD_ROCKCHIP_TRUST_MERGE_TO_UBOOT)),true)
 AB_OTA_PARTITIONS += \
@@ -57,8 +56,8 @@ AB_OTA_PARTITIONS += \
 endif
 
 ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \>= 3)))
+# NOTE: Resource partition used for AVB, rockchip specific?
 AB_OTA_PARTITIONS += \
-    resource \
     vendor_boot
 
 ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \>= 4)))

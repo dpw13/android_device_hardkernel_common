@@ -15,19 +15,19 @@
 #
 
 ifeq ($(BOARD_BUILD_GKI),true)
-PRODUCT_KERNEL_CONFIG := gki_defconfig rockchip_gki.config
+TARGET_KERNEL_CONFIG := gki_defconfig rockchip_gki.config
 else # Regular build
-PRODUCT_KERNEL_CONFIG := rockchip_defconfig
-ifeq ($(BUILD_WITH_GO_OPT), true)
-PRODUCT_KERNEL_CONFIG += android-13-go.config
-else
-PRODUCT_KERNEL_CONFIG += android-13.config
-endif
+TARGET_KERNEL_CONFIG := rockchip_defconfig
+#ifeq ($(BUILD_WITH_GO_OPT), true)
+#TARGET_KERNEL_CONFIG += android-14-go.config
+#else
+#TARGET_KERNEL_CONFIG += android-14.config
+#endif
 
 # Odroid configs
-PRODUCT_KERNEL_CONFIG += odroid_common.config
+TARGET_KERNEL_CONFIG += odroid_common.config
 
 ifeq ($(TARGET_BUILD_VARIANT), user)
-PRODUCT_KERNEL_CONFIG += non_debuggable.config
+TARGET_KERNEL_CONFIG += non_debuggable.config
 endif
 endif

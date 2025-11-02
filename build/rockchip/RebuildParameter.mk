@@ -2,66 +2,65 @@ ifdef PRODUCT_PARAMETER_TEMPLATE
 
 $(info build parameter.txt with $(PRODUCT_PARAMETER_TEMPLATE)....)
 
+# TODO: NONE of this should depend on odroid; there are better vars to check
+
 ifeq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
-partition_list := fat:19M,security:4M,uboot:2M,misc:4M
+  partition_list := fat:19M,security:4M,uboot:2M,misc:4M
 else
-ifeq ($(strip $(BOARD_USES_AB_IMAGE)), true)
-partition_list := security:4M,uboot_a:4M,trust_a:4M,misc:4M
-else
-partition_list := security:4M,uboot:4M,trust:4M,misc:4M
-endif # BOARD_USES_AB_IMAGE
+  ifeq ($(strip $(BOARD_USES_AB_IMAGE)), true)
+    partition_list := security:4M,uboot_a:4M,trust_a:4M,misc:4M
+  else
+    partition_list := security:4M,uboot:4M,trust:4M,misc:4M
+  endif # BOARD_USES_AB_IMAGE
 endif # TARGET_BOARD_HARDWARE
 
 ifeq ($(strip $(BOARD_USES_AB_IMAGE)), true)
-# Header V3, add vendor_boot and resource.
-ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \>= 3)))
-partition_list := $(partition_list),resource_a:$(BOARD_RESOURCEIMAGE_PARTITION_SIZE),vendor_boot_a:$(BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE)
-ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \>= 4)))
-partition_list := $(partition_list),init_boot_a:$(BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE)
-endif # Header V4
-endif # Header V3
-ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
-partition_list := $(partition_list),dtbo_a:$(BOARD_DTBOIMG_PARTITION_SIZE),vbmeta_a:1M,boot_a:$(BOARD_BOOTIMAGE_PARTITION_SIZE)
-else
-partition_list := $(partition_list),vbmeta_a:1M,boot_a:$(BOARD_BOOTIMAGE_PARTITION_SIZE)
-endif
+  # Header V3, add vendor_boot and resource.
+  ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3),)
+    partition_list := $(partition_list),resource_a:$(BOARD_RESOURCEIMAGE_PARTITION_SIZE),vendor_boot_a:$(BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE)
+    ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),4),)
+      partition_list := $(partition_list),init_boot_a:$(BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE)
+    endif # Header V4
+  endif # Header V3
+  ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
+    partition_list := $(partition_list),dtbo_a:$(BOARD_DTBOIMG_PARTITION_SIZE)
+  endif
+  partition_list := $(partition_list),vbmeta_a:1M,boot_a:$(BOARD_BOOTIMAGE_PARTITION_SIZE)
 else # None-A/B
-# Header V3, add vendor_boot and resource.
-ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \>= 3)))
-partition_list := $(partition_list),resource:$(BOARD_RESOURCEIMAGE_PARTITION_SIZE),vendor_boot:$(BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE)
-ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \>= 4)))
-partition_list := $(partition_list),init_boot:$(BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE)
-endif # Header V4
-endif # Header V3
-ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
-partition_list := $(partition_list),dtbo:$(BOARD_DTBOIMG_PARTITION_SIZE),vbmeta:1M,boot:$(BOARD_BOOTIMAGE_PARTITION_SIZE),recovery:$(BOARD_RECOVERYIMAGE_PARTITION_SIZE)
-else
-partition_list := $(partition_list),vbmeta:1M,boot:$(BOARD_BOOTIMAGE_PARTITION_SIZE),recovery:$(BOARD_RECOVERYIMAGE_PARTITION_SIZE)
-endif
+  # Header V3, add vendor_boot and resource.
+  ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3),)
+    partition_list := $(partition_list),resource:$(BOARD_RESOURCEIMAGE_PARTITION_SIZE),vendor_boot:$(BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE)
+    ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),4),)
+      partition_list := $(partition_list),init_boot:$(BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE)
+    endif # Header V4
+  endif # Header V3
+  ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
+    partition_list := $(partition_list),dtbo:$(BOARD_DTBOIMG_PARTITION_SIZE)
+  endif
+  partition_list := $(partition_list),vbmeta:1M,boot:$(BOARD_BOOTIMAGE_PARTITION_SIZE),recovery:$(BOARD_RECOVERYIMAGE_PARTITION_SIZE)
 endif # BOARD_USES_AB_IMAGE
 
 ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
-partition_list := $(partition_list),backup:384M,cache:$(BOARD_CACHEIMAGE_PARTITION_SIZE),metadata:16M
-else
-partition_list := $(partition_list),cache:$(BOARD_CACHEIMAGE_PARTITION_SIZE),metadata:16M
+  partition_list := $(partition_list),backup:384M
 endif
+partition_list := $(partition_list),cache:$(BOARD_CACHEIMAGE_PARTITION_SIZE),metadata:16M
 
 ifeq ($(strip $(BUILD_WITH_GOOGLE_FRP)), true)
-partition_list := $(partition_list),frp:512K
+  partition_list := $(partition_list),frp:512K
 endif
 
 ifneq ($(strip $(BOARD_WITH_SPECIAL_PARTITIONS)), )
-partition_list := $(partition_list),$(BOARD_WITH_SPECIAL_PARTITIONS)
+  partition_list := $(partition_list),$(BOARD_WITH_SPECIAL_PARTITIONS)
 endif
 
 ifeq ($(strip $(BOARD_SUPER_PARTITION_GROUPS)),rockchip_dynamic_partitions)
-partition_list := $(partition_list),super:$(BOARD_SUPER_PARTITION_SIZE)
+  partition_list := $(partition_list),super:$(BOARD_SUPER_PARTITION_SIZE)
 else # BOARD_USE_DYNAMIC_PARTITIONS
-partition_list := $(partition_list),system:$(BOARD_SYSTEMIMAGE_PARTITION_SIZE),vendor:$(BOARD_VENDORIMAGE_PARTITION_SIZE),odm:$(BOARD_ODMIMAGE_PARTITION_SIZE)
+  partition_list := $(partition_list),system:$(BOARD_SYSTEMIMAGE_PARTITION_SIZE),vendor:$(BOARD_VENDORIMAGE_PARTITION_SIZE),odm:$(BOARD_ODMIMAGE_PARTITION_SIZE)
 endif
 
 ifdef BOARD_USERDATAIMAGE_PARTITION_SIZE
-partition_list := $(partition_list),data:$(BOARD_USERDATAIMAGE_PARTITION_SIZE)
+  partition_list := $(partition_list),data:$(BOARD_USERDATAIMAGE_PARTITION_SIZE)
 endif
 
 intermediates := $(call intermediates-dir-for,FAKE,rockchip_parameter)

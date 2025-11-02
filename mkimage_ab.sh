@@ -64,7 +64,7 @@ BOOT_OTA="ota"
 
     if [ ! -f $OUT/kernel ]
     then
-	    echo "kernel image not fount![$OUT/kernel] "
+	    echo "kernel image not found![$OUT/kernel] "
         read -p "copy kernel from TARGET_PREBUILT_KERNEL[$KERNEL_SRC_PATH] (y/n) n to exit?"
         if [ "$REPLY" == "y" ]
         then
@@ -162,7 +162,7 @@ then
 	cp -a $UBOOT_PATH/uboot.img $IMAGE_PATH/uboot.img
 	echo "done."
 else
-	echo "$UBOOT_PATH/uboot.img not fount! Please make it from $UBOOT_PATH first!"
+	echo "$UBOOT_PATH/uboot.img not found! Please make it from $UBOOT_PATH first!"
 fi
 
 if [ -f $UBOOT_PATH/trust_nand.img ]
@@ -182,7 +182,7 @@ then
         echo "done."
 
 else
-        echo "$UBOOT_PATH/trust.img not fount! Please make it from $UBOOT_PATH first!"
+        echo "$UBOOT_PATH/trust.img not found! Please make it from $UBOOT_PATH first!"
 fi
 
 if [ "$TARGET_HARDWARE" != "odroid" ]; then
@@ -197,7 +197,7 @@ else
 		cp -a $UBOOT_PATH/*loader*.bin $IMAGE_PATH/MiniLoaderAll.bin
 		echo "done."
 	else
-        echo "$UBOOT_PATH/*MiniLoaderAll_*.bin not fount! Please make it from $UBOOT_PATH first!"
+        echo "$UBOOT_PATH/*MiniLoaderAll_*.bin not found! Please make it from $UBOOT_PATH first!"
 	fi
 fi
 fi
@@ -208,7 +208,7 @@ then
     cp -a $FLASH_CONFIG_FILE $IMAGE_PATH/config.cfg
     echo "done."
 else
-    echo "$FLASH_CONFIG_FILE not fount!"
+    echo "$FLASH_CONFIG_FILE not found!"
 fi
 
 if [ $BOARD_BOOTIMG_HEADER_VERSION -ge 3 ] ; then
@@ -229,7 +229,7 @@ if [ "$BOARD_USES_AB_IMAGE" = "true" ]; then
         if [ -f $OUT/parameter.txt ]; then
             cp -a $OUT/parameter.txt $IMAGE_PATH/parameter.txt
         else
-            echo "$PARAMETER not fount!"
+            echo "$PARAMETER not found!"
         fi
     fi
 fi
@@ -254,7 +254,7 @@ then
         cp -a $TARGET_BASE_PARAMETER_IMAGE $IMAGE_PATH/baseparameter.img
         echo "done."
     else
-        echo "$TARGET_BASE_PARAMETER_IMAGE not fount!"
+        echo "$TARGET_BASE_PARAMETER_IMAGE not found!"
     fi
 fi
 

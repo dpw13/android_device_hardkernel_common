@@ -81,7 +81,7 @@ func ChangeSrcsPath(ctx android.LoadHookContext) {
     }
     p := &props{}
     if (ctx.ContainsProperty("optee")) {
-        prefix = getOpteePrefix(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"))
+        prefix = getOpteePrefix(ctx.AConfig().VendorConfig("ANDROID").String("target_board_platform"))
     }
     if (strings.EqualFold(ctx.AConfig().DevicePrimaryArchType().String(),"arm64")) {
         prefix += "arm64/"
@@ -89,7 +89,7 @@ func ChangeSrcsPath(ctx android.LoadHookContext) {
         prefix += "arm/"
     }
     if (ctx.ContainsProperty("vpu")) {
-        prefix += getVpuPrefix(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"))
+        prefix += getVpuPrefix(ctx.AConfig().VendorConfig("ANDROID").String("target_board_platform"))
     }
     p.Srcs = append(p.Srcs, prefix + module_name)
     //fmt.Println("srcs: ", p.Srcs)
@@ -145,7 +145,7 @@ func AppendArchStaticLibs(ctx android.LoadHookContext) {
 }
 // Change the lib path, chose lib/lib64
 func peferCompileMultilib(ctx android.LoadHookContext) (*string) {
-    /*fmt.Println("TARGET_PRODUCT:", ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"))
+    /*fmt.Println("TARGET_PRODUCT:", ctx.AConfig().VendorConfig("ANDROID").String("target_board_platform"))
     fmt.Println("TARGET_ARCH:", ctx.AConfig().DevicePrimaryArchType().String())
     fmt.Println("MODULE NAME:", ctx.ModuleName()[9:]) // Skip 'prebuilt_'
     fmt.Println("isOptee:", ctx.ContainsProperty("optee"))*/
@@ -168,14 +168,14 @@ func configArm64Lib(ctx android.LoadHookContext) (Ex_multilibType) {
     var prefix64 string = ""
     var prefix32 string = ""
     if (ctx.ContainsProperty("optee")) {
-        prefix64 = getOpteePrefix(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"))
+        prefix64 = getOpteePrefix(ctx.AConfig().VendorConfig("ANDROID").String("target_board_platform"))
         prefix32 = prefix64
     }
     prefix64 += "arm64/"
     prefix32 += "arm/"
     if (ctx.ContainsProperty("vpu")) {
-        prefix64 += getVpuPrefix(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"))
-        prefix32 += getVpuPrefix(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"))
+        prefix64 += getVpuPrefix(ctx.AConfig().VendorConfig("ANDROID").String("target_board_platform"))
+        prefix32 += getVpuPrefix(ctx.AConfig().VendorConfig("ANDROID").String("target_board_platform"))
     }
     multilib.Lib32.Srcs = append(srcs, prefix32 + module_name)
     multilib.Lib64.Srcs = append(srcs, prefix64 + module_name)
@@ -186,15 +186,15 @@ func configArm64Lib(ctx android.LoadHookContext) (Ex_multilibType) {
 
 func configArmLib(ctx android.LoadHookContext) ([]string) {
     var srcs []string
-    //fmt.Println("TARGET_PRODUCT:", ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"))
+    //fmt.Println("TARGET_PRODUCT:", ctx.AConfig().VendorConfig("ANDROID").String("target_board_platform"))
     var prefix string = ""
     var module_name string = ctx.ModuleName()[9:] + ".so"
     if (ctx.ContainsProperty("optee")) {
-        prefix = getOpteePrefix(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"))
+        prefix = getOpteePrefix(ctx.AConfig().VendorConfig("ANDROID").String("target_board_platform"))
     }
     prefix += "arm/"
     if (ctx.ContainsProperty("vpu")) {
-        prefix += getVpuPrefix(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"))
+        prefix += getVpuPrefix(ctx.AConfig().VendorConfig("ANDROID").String("target_board_platform"))
     }
     srcs = append(srcs, prefix + module_name)
     //fmt.Println("srcs:", srcs)
@@ -209,7 +209,7 @@ func configArm64LibStatic(ctx android.LoadHookContext) (Ex_multilibType) {
     var prefix32 string = ""
     var suffix string = "."
     if (ctx.ContainsProperty("aiq")) {
-        var platform = ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM")
+        var platform = ctx.AConfig().VendorConfig("ANDROID").String("target_board_platform")
         var rkaiq_list = []string{"rk356x", "rk3588", "rk3562"}
         if isContain(rkaiq_list, platform) {
             suffix += platform[2:]
