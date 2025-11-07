@@ -91,7 +91,9 @@ else
   # Header V3, add vendor_boot
   ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3),)
     BOARD_BOOTIMAGE_PARTITION_SIZE ?= 67108864
-    BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE ?= 67108864
+    # With boot header v4 and Android 13+, this needs to fit recovery resources
+    # as well as boot resources
+    BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE ?= 100663296
     BOARD_RESOURCEIMAGE_PARTITION_SIZE ?= 16777216
   else
     BOARD_BOOTIMAGE_PARTITION_SIZE ?= 41943040

@@ -29,7 +29,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     update_engine_client
 
-# TODO: uboot removed for now
+# Uboot does not belong here as (currently) the SPL is not slot aware
+# TODO: verify that
 AB_OTA_PARTITIONS += \
     boot \
     system	\
@@ -55,12 +56,12 @@ AB_OTA_PARTITIONS += \
     product
 endif
 
-ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \>= 3)))
+ifeq (true,$(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3))
 # NOTE: Resource partition used for AVB, rockchip specific?
 AB_OTA_PARTITIONS += \
     vendor_boot
 
-ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \>= 4)))
+ifeq (true,$(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),4))
 AB_OTA_PARTITIONS += \
     init_boot
 endif
@@ -74,7 +75,7 @@ PRODUCT_PACKAGES += \
 
 ifeq ($(strip $(BOARD_ROCKCHIP_VIRTUAL_AB_ENABLE)),true)
 ifeq ($(strip $(BOARD_ROCKCHIP_VIRTUAL_AB_COMPRESSION)),true)
-ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \>= 3)))
+ifeq (true,$(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3))
 $(call inherit-product, \
     $(SRC_TARGET_DIR)/product/virtual_ab_ota/compression_with_xor.mk)
 else

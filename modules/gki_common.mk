@@ -53,7 +53,7 @@ endif
 # BOARD_COPY_BOOT_IMAGE_TO_TARGET_FILES := 
 
 # GKI APEX
-PRODUCT_PACKAGES += com.android.gki.kmi_5_10_android12_1
+#PRODUCT_PACKAGES += com.android.gki.kmi_5_10_android12_1
 
 # Tools
 PRODUCT_PACKAGES += \

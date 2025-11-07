@@ -9,10 +9,13 @@ on fs
 on late-fs
     # Start services for bootanim
     start servicemanager
-    start hwcomposer-2-1
     start gralloc-2-0
+    # hwcomposer needs gralloc started first
+    start hwcomposer-2-1
     start surfaceflinger
-    start bootanim
+    # We want to start the boot animation as soon as we can, but starting it here causes
+    # a ton of logging noise because surfaceflinger isn't up yet
+    #start bootanim
 
     exec_start wait_for_keymaster
     # Mount RW partitions which need run fsck

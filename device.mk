@@ -16,17 +16,17 @@
 include vendor/rockchip/common/BoardConfigVendor.mk
 
 # mali-G610 的 GPU 架构实际上是 Mali valhall, 但 ARM 对 bifrost 和 valhall 提供同一套的 gralloc 和 DDK 源码.
-ifneq (,$(filter  mali-tDVx mali-G52 mali-G610, $(TARGET_BOARD_PLATFORM_GPU)))
+ifneq (,$(filter mali-tDVx mali-G52 mali-G610,$(TARGET_BOARD_PLATFORM_GPU)))
 BOARD_VENDOR_GPU_PLATFORM := bifrost
 endif
 
-ifneq (,$(filter  mali-t860 mali-t760, $(TARGET_BOARD_PLATFORM_GPU)))
+ifneq (,$(filter mali-t860 mali-t760,$(TARGET_BOARD_PLATFORM_GPU)))
 BOARD_VENDOR_GPU_PLATFORM := midgard
 endif
 
-ifeq ($(strip $(TARGET_ARCH)), arm64)
+ifeq ($(strip $(TARGET_ARCH)),arm64)
 # TODO: consider 64_only to reduce image size
-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
+$(call inherit-product,$(SRC_TARGET_DIR)/product/core_64_bit.mk)
 endif
 
 PRODUCT_AAPT_CONFIG ?= normal large xlarge hdpi tvdpi xhdpi xxhdpi
@@ -34,19 +34,19 @@ PRODUCT_AAPT_PREF_CONFIG ?= xhdpi
 
 # value: tablet,box,phone,car
 # It indicates whether to be tablet platform or not
-ifneq ($(filter %box, $(TARGET_PRODUCT)), )
+ifneq ($(filter %box,$(TARGET_PRODUCT)),)
 TARGET_BOARD_PLATFORM_PRODUCT ?= box
-else ifneq ($(filter %vr, $(TARGET_PRODUCT)), )
+else ifneq ($(filter %vr,$(TARGET_PRODUCT)),)
 TARGET_BOARD_PLATFORM_PRODUCT ?= vr
-else ifneq ($(filter %car, $(TARGET_PRODUCT)), )
+else ifneq ($(filter %car,$(TARGET_PRODUCT)),)
 TARGET_BOARD_PLATFORM_PRODUCT ?= car
 else
 TARGET_BOARD_PLATFORM_PRODUCT ?= tablet
 endif
 
-ifeq ($(filter atv box, $(strip $(TARGET_BOARD_PLATFORM_PRODUCT))), )
+ifeq ($(filter atv box,$(strip $(TARGET_BOARD_PLATFORM_PRODUCT))),)
 DEVICE_PACKAGE_OVERLAYS += device/hardkernel/common/overlay
-ifneq ($(BOARD_HAS_RK_4G_MODEM), true)
+ifneq ($(BOARD_HAS_RK_4G_MODEM),true)
 DEVICE_PACKAGE_OVERLAYS += device/hardkernel/common/overlay_wifi_only
 endif
 endif
@@ -79,18 +79,18 @@ PRODUCT_PACKAGES += \
     vndservicemanager
 
 # Prebuild apps
-#$(call inherit-product, device/hardkernel/common/modules/preinstall.mk)
-#$(call inherit-product, device/hardkernel/common/modules/optimize.mk)
-#$(call inherit-product, device/hardkernel/common/modules/build_dm.mk)
+#$(call inherit-product,device/hardkernel/common/modules/preinstall.mk)
+#$(call inherit-product,device/hardkernel/common/modules/optimize.mk)
+#$(call inherit-product,device/hardkernel/common/modules/build_dm.mk)
 
 # Inherit product config
-ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), atv)
+ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)),atv)
   # CTS require faketouch
   BOARD_USER_FAKETOUCH ?= true
 
-  $(call inherit-product, device/google/atv/products/atv_base.mk)
-  $(call inherit-product-if-exists, frameworks/base/data/sounds/AllAudio.mk)
-  $(call inherit-product, device/hardkernel/common/modules/rockchip_apps_box.mk)
+  $(call inherit-product,device/google/atv/products/atv_base.mk)
+  $(call inherit-product-if-exists,frameworks/base/data/sounds/AllAudio.mk)
+  $(call inherit-product,device/hardkernel/common/modules/rockchip_apps_box.mk)
 
   #only box and atv using our audio policy(write by rockchip)
   USE_CUSTOM_AUDIO_POLICY := 1
@@ -99,7 +99,7 @@ ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), atv)
 
   # rktoolbox
   ifeq ($(strip $(BOARD_WITH_RKTOOLBOX)),true)
-  $(call inherit-product-if-exists, external/rktoolbox/rktoolbox.mk)
+  $(call inherit-product-if-exists,external/rktoolbox/rktoolbox.mk)
   endif
 
   # Light AIDL
@@ -116,9 +116,9 @@ ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), atv)
   PRODUCT_COPY_FILES += \
        $(LOCAL_PATH)/bootanimation.zip:/system/media/bootanimation.zip
 
-else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), box)
-  $(call inherit-product, device/hardkernel/common/tv/tv_base.mk)
-  $(call inherit-product, device/hardkernel/common/modules/rockchip_apps_box.mk)
+else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)),box)
+  $(call inherit-product,device/hardkernel/common/tv/tv_base.mk)
+  $(call inherit-product,device/hardkernel/common/modules/rockchip_apps_box.mk)
 
   #include device/hardkernel/common/samba/rk31_samba.mk
   PRODUCT_COPY_FILES += \
@@ -138,30 +138,61 @@ else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), box)
   TARGET_RECOVERY_OVERSCAN_PERCENT := 2
   TARGET_BASE_PARAMETER_IMAGE ?= device/hardkernel/common/baseparameter/baseparameter.img
   # savBaseParameter tool
-  ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
+  ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
       PRODUCT_PACKAGES += saveBaseParameter
   endif
   DEVICE_FRAMEWORK_MANIFEST_FILE := device/hardkernel/common/manifest_framework_override.xml
 
-else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), car)
-  $(call inherit-product, $(SRC_TARGET_DIR)/product/core_minimal.mk)
+else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)),car)
+  $(call inherit-product,$(SRC_TARGET_DIR)/product/core_minimal.mk)
   # lineage/packages/services/Car/car_product/build/car_base.mk inherits from core_minimal
   # once we're ready to start building car-related software
-  #$(call inherit-product, packages/services/Car/car_product/build/car_generic_system.mk)
-  $(call inherit-product, vendor/lineage/config/common_car.mk)
+  #$(call inherit-product,packages/services/Car/car_product/build/car_generic_system.mk)
+  $(call inherit-product,vendor/lineage/config/common_car.mk)
+  # Car product makefiles may include these so maybe remove when we're ready
+  $(call inherit-product-if-exists,frameworks/base/data/fonts/fonts.mk)
+  $(call inherit-product-if-exists,external/roboto-fonts/fonts.mk)
+
+  # Packages that will be covered by car_base
+  PRODUCT_PACKAGES += \
+    Launcher3QuickStep \
+    Contacts \
+    Settings \
+    StorageManager \
+    SystemUI \
+    FusedLocation \
+    InputDevices \
+    KeyChain \
+    LatinIME \
+    service-jobscheduler \
+    Provision
+
+  # PRODUCT_IS_AUTOMOTIVE in vendor/lineage/config/common.mk
+  PRODUCT_PACKAGES += \
+    LineageParts \
+    LineageSetupWizard
+
+  PRODUCT_SYSTEM_SERVER_APPS += \
+    FusedLocation \
+    InputDevices \
+    KeyChain
+
+  # The order here is the same order they end up on the classpath, so it matters.
+  PRODUCT_SYSTEM_SERVER_JARS := \
+    com.android.location.provider \
+    service-jobscheduler \
+    services \
+    org.lineageos.platform
+
 
   PRODUCT_PROPERTY_OVERRIDES += \
     ro.rk.screenoff_time=2147483647
 
   DEVICE_PACKAGE_OVERLAYS += device/hardkernel/common/overlay_screenoff
 
-  # Sensor HAL
-  PRODUCT_PACKAGES += \
-      android.hardware.sensors@1.0-service \
-      android.hardware.sensors@1.0-impl \
-      sensors.$(TARGET_BOARD_HARDWARE)
+  # Sensor HAL disabled for now since rk3588 doesn't seem to have any?
 
-else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), tablet)
+else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)),tablet)
   PRODUCT_PROPERTY_OVERRIDES += \
       ro.rk.screenoff_time=60000
 
@@ -184,19 +215,19 @@ ifneq ($(strip $(BUILD_WITH_GO_OPT)),true)
 
 ifeq ($(strip $(TARGET_ARCH)),arm)
       # For arm Go tablet.
-      $(call inherit-product, $(SRC_TARGET_DIR)/product/generic_no_telephony.mk)
-      $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
-      $(call inherit-product-if-exists, frameworks/base/data/sounds/AudioPackageGo.mk)
+      $(call inherit-product,$(SRC_TARGET_DIR)/product/generic_no_telephony.mk)
+      $(call inherit-product,$(SRC_TARGET_DIR)/product/languages_full.mk)
+      $(call inherit-product-if-exists,frameworks/base/data/sounds/AudioPackageGo.mk)
 else ifeq ($(strip $(TARGET_ARCH)),arm64)
       # For arm64 Go tablet
-      $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base.mk)
+      $(call inherit-product,$(SRC_TARGET_DIR)/product/full_base.mk)
 endif
 
 PRODUCT_PACKAGES += Launcher3QuickStepGo
 
 else # no GO_OPT
-  # Normal tablet, add QuickStep for normal product only.
-  $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base.mk)
+  # Normal tablet,add QuickStep for normal product only.
+  $(call inherit-product,$(SRC_TARGET_DIR)/product/full_base.mk)
   #PRODUCT_PACKAGES += Launcher3QuickStep
 endif
   # add this prop to skip vr test for cts-on-gsi in vts
@@ -208,9 +239,9 @@ ifneq ($(strip $(BUILD_WITH_GOOGLE_GMS_EXPRESS)),true)
       Music \
       WallpaperPicker
 
-  $(call inherit-product, device/hardkernel/common/modules/rockchip_apps.mk)
+  $(call inherit-product,device/hardkernel/common/modules/rockchip_apps.mk)
 
-ifneq ($(BUILD_WITH_GOOGLE_MARKET), true)
+ifneq ($(BUILD_WITH_GOOGLE_MARKET),true)
     PRODUCT_PACKAGES += \
         InProcessNetworkStack \
         com.android.tethering.inprocess
@@ -223,25 +254,25 @@ endif # tablet without GMS-Express
 endif
 
 # PCBA tools
-#$(call inherit-product, device/hardkernel/common/modules/pcba.mk)
+#$(call inherit-product,device/hardkernel/common/modules/pcba.mk)
 # Optee
-$(call inherit-product, device/hardkernel/common/modules/optee.mk)
+$(call inherit-product,device/hardkernel/common/modules/optee.mk)
 # Sepolicy
-$(call inherit-product, device/hardkernel/common/modules/android_sepolicy.mk)
+$(call inherit-product,device/hardkernel/common/modules/android_sepolicy.mk)
 # TWRP
-$(call inherit-product, device/hardkernel/common/modules/twrp.mk)
+$(call inherit-product,device/hardkernel/common/modules/twrp.mk)
 # GMS
-$(call inherit-product, device/hardkernel/common/modules/gms.mk)
+$(call inherit-product,device/hardkernel/common/modules/gms.mk)
 # Media OMX/C2
-$(call inherit-product, device/hardkernel/common/modules/mediacodec.mk)
+$(call inherit-product,device/hardkernel/common/modules/mediacodec.mk)
 # Android Go configuration
-$(call inherit-product, device/hardkernel/common/modules/android_go.mk)
+$(call inherit-product,device/hardkernel/common/modules/android_go.mk)
 # Android Verified Boot
-$(call inherit-product, device/hardkernel/common/modules/avb.mk)
+$(call inherit-product,device/hardkernel/common/modules/avb.mk)
 # init.rc files
-$(call inherit-product, device/hardkernel/common/rootdir/rootdir.mk)
-ifeq ($(strip $(BOARD_HDMI_IN_SUPPORT)), true)
-    $(call inherit-product, device/hardkernel/common/modules/hdmi_in.mk)
+$(call inherit-product,device/hardkernel/common/rootdir/rootdir.mk)
+ifeq ($(strip $(BOARD_HDMI_IN_SUPPORT)),true)
+    $(call inherit-product,device/hardkernel/common/modules/hdmi_in.mk)
 endif
 # For screen hw rotation
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
@@ -298,16 +329,16 @@ PRODUCT_PACKAGES += \
 endif
 
 ifeq ($(strip $(BOARD_HAS_RK_4G_MODEM)),true)
-$(call inherit-product, device/hardkernel/common/modules/4g_modem.mk)
+$(call inherit-product,device/hardkernel/common/modules/4g_modem.mk)
 endif
 
-ifeq ($(filter MediaTek_mt7601 MediaTek RealTek Espressif, $(strip $(BOARD_CONNECTIVITY_VENDOR))), )
+ifeq ($(filter MediaTek_mt7601 MediaTek RealTek Espressif,$(strip $(BOARD_CONNECTIVITY_VENDOR))),)
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/init.connectivity.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.connectivity.rc
 endif
 
 
-ifeq ($(strip $(BOARD_SUPPORT_MULTIAUDIO)), true)
+ifeq ($(strip $(BOARD_SUPPORT_MULTIAUDIO)),true)
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/audio_policy_configuration_multiaudio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml
 else
@@ -322,7 +353,7 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml \
     frameworks/av/media/libeffects/data/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml
 
-ifeq ($(BUILD_WITH_GO_OPT), true)
+ifeq ($(BUILD_WITH_GO_OPT),true)
 PRODUCT_FSTAB_TEMPLATE ?= device/hardkernel/common/scripts/fstab_tools/fstab_go.in
 else
 PRODUCT_FSTAB_TEMPLATE ?= device/hardkernel/common/scripts/fstab_tools/fstab.in
@@ -330,13 +361,13 @@ endif
 
 ifndef PRODUCT_FSTAB_TEMPLATE
 $(warning Please add fstab.in with PRODUCT_FSTAB_TEMPLATE in your product.mk)
-# To use fstab auto generator, define fstab.in in your product.mk,
+# To use fstab auto generator,define fstab.in in your product.mk,
 # Then include the device/hardkernel/common/build/rockchip/RebuildFstab.mk in your AndroidBoard.mk
 PRODUCT_COPY_FILES += \
     $(TARGET_DEVICE_DIR)/fstab.odroid:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.$(TARGET_BOARD_HARDWARE) \
     $(TARGET_DEVICE_DIR)/fstab.odroid:$(TARGET_COPY_OUT_RAMDISK)/fstab.$(TARGET_BOARD_HARDWARE)
 
-# Header V3+, add vendor_boot
+# Header V3+,add vendor_boot
 ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3),)
 PRODUCT_COPY_FILES += \
     $(TARGET_DEVICE_DIR)/fstab.odroid:$(TARGET_COPY_OUT_VENDOR_RAMDISK)/first_stage_ramdisk/fstab.$(TARGET_BOARD_HARDWARE)
@@ -352,12 +383,12 @@ PRODUCT_PACKAGES += \
     libwebrtc_audio_coding
 
 #audio
-$(call inherit-product-if-exists, hardware/rockchip/audio/tinyalsa_hal/codec_config/rk_audio.mk)
+$(call inherit-product-if-exists,hardware/rockchip/audio/tinyalsa_hal/codec_config/rk_audio.mk)
 
 # SDCardFS deprecate for Android R+
 # https://source.android.google.cn/devices/storage/sdcardfs-deprecate
 #ifneq ($(call math_gt_or_eq,$(PRODUCT_SHIPPING_API_LEVEL),30),)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
+$(call inherit-product,$(SRC_TARGET_DIR)/product/emulated_storage.mk)
 #endif
 
 ifeq ($(BOARD_NFC_SUPPORT),true)
@@ -367,7 +398,7 @@ PRODUCT_COPY_FILES += \
 endif
 
 # Bluetooth
-$(call inherit-product, device/hardkernel/common/modules/bluetooth.mk)
+$(call inherit-product,device/hardkernel/common/modules/bluetooth.mk)
 
 ifeq ($(BOARD_WIFI_SUPPORT),true)
 PRODUCT_COPY_FILES += \
@@ -426,10 +457,10 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.usb.accessory.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.accessory.xml
 endif
 
-ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), vr)
+ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)),vr)
     PRODUCT_COPY_FILES += \
         frameworks/native/data/etc/vr_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/vr_core_hardware.xml
-else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), laptop)
+else ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)),laptop)
     PRODUCT_COPY_FILES += \
         frameworks/native/data/etc/laptop_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/laptop_core_hardware.xml
 endif
@@ -442,31 +473,31 @@ PRODUCT_PACKAGES += \
     libjni_pinyinime
 
 # Include thermal HAL module
-$(call inherit-product, device/hardkernel/common/modules/thermal.mk)
+$(call inherit-product,device/hardkernel/common/modules/thermal.mk)
 
 # include vibrator AIDL module
-$(call inherit-product, device/hardkernel/common/modules/vibrator.mk)
+$(call inherit-product,device/hardkernel/common/modules/vibrator.mk)
 
 # Media DRM
-$(call inherit-product, device/hardkernel/common/modules/media_drm.mk)
+$(call inherit-product,device/hardkernel/common/modules/media_drm.mk)
 
 # Usb controller detector for GKI
-$(call inherit-product, device/hardkernel/common/modules/usb.mk)
+$(call inherit-product,device/hardkernel/common/modules/usb.mk)
 
 # GKI modules
-$(call inherit-product, device/hardkernel/common/modules/gki_common.mk)
+$(call inherit-product,device/hardkernel/common/modules/gki_common.mk)
 
 # kernel configurations
-$(call inherit-product, device/hardkernel/common/modules/kernel_config.mk)
+$(call inherit-product,device/hardkernel/common/modules/kernel_config.mk)
 
 # make boot/vendor_boot
-$(call inherit-product, device/hardkernel/common/modules/make_boot.mk)
+$(call inherit-product,device/hardkernel/common/modules/make_boot.mk)
 
 # recovery
-$(call inherit-product, device/hardkernel/common/modules/recovery.mk)
+$(call inherit-product,device/hardkernel/common/modules/recovery.mk)
 
 # rknn modules
-$(call inherit-product, device/hardkernel/common/modules/rknn.mk)
+$(call inherit-product,device/hardkernel/common/modules/rknn.mk)
 
 # Power AIDL
 PRODUCT_PACKAGES += \
@@ -546,7 +577,7 @@ PRODUCT_PACKAGES += \
     android.hardware.graphics.composer@2.1-service
 
 # iep
-ifneq ($(filter rk3190 rk3026 rk3288 rk312x rk3126c rk3128 rk3368 rk3326 rk356x rk3328 rk3366 rk3399, $(strip $(TARGET_BOARD_PLATFORM))), )
+ifneq ($(filter rk3190 rk3026 rk3288 rk312x rk3126c rk3128 rk3368 rk3326 rk356x rk3328 rk3366 rk3399,$(strip $(TARGET_BOARD_PLATFORM))),)
 BUILD_IEP := true
 PRODUCT_PACKAGES += \
     libiep
@@ -555,7 +586,7 @@ BUILD_IEP := false
 endif
 
 # rkvtunnel
-ifneq ($(filter rk3528, $(strip $(TARGET_BOARD_PLATFORM))), )
+ifneq ($(filter rk3528,$(strip $(TARGET_BOARD_PLATFORM))),)
 PRODUCT_PACKAGES += \
     librkvt \
     librkvt.vendor \
@@ -563,7 +594,7 @@ PRODUCT_PACKAGES += \
 endif
 
 # Health/Battery & Charger
-$(call inherit-product, device/hardkernel/common/modules/health.mk)
+$(call inherit-product,device/hardkernel/common/modules/health.mk)
 
 # Add board.platform default property to parsing related rc
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
@@ -574,7 +605,7 @@ PRODUCT_PRODUCT_PROPERTIES += \
 
 PRODUCT_CHARACTERISTICS := $(strip $(TARGET_BOARD_PLATFORM_PRODUCT))
 
-ifeq ($(strip $(BOARD_SUPPORT_MULTIAUDIO)), true)
+ifeq ($(strip $(BOARD_SUPPORT_MULTIAUDIO)),true)
 PRODUCT_PACKAGES += \
     audio.ext_1.$(TARGET_BOARD_HARDWARE) \
     audio.ext_2.$(TARGET_BOARD_HARDWARE) \
@@ -621,21 +652,21 @@ PRODUCT_PACKAGES += \
 	alsa.audio.primary.$(TARGET_BOARD_HARDWARE)\
 	alsa.audio_policy.$(TARGET_BOARD_HARDWARE)
 
-$(call inherit-product-if-exists, external/alsa-lib/copy.mk)
-$(call inherit-product-if-exists, external/alsa-utils/copy.mk)
+$(call inherit-product-if-exists,external/alsa-lib/copy.mk)
+$(call inherit-product-if-exists,external/alsa-utils/copy.mk)
 
 
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.strictmode.visual=false 
 
 
-ifeq ($(strip $(BOARD_HAVE_FLASH)), true)
+ifeq ($(strip $(BOARD_HAVE_FLASH)),true)
     PRODUCT_PROPERTY_OVERRIDES += ro.rk.flash_enable=true
 else
     PRODUCT_PROPERTY_OVERRIDES += ro.rk.flash_enable=false
 endif
 
-ifeq ($(strip $(BOARD_SUPPORT_HDMI)), true)
+ifeq ($(strip $(BOARD_SUPPORT_HDMI)),true)
     PRODUCT_PROPERTY_OVERRIDES += ro.rk.hdmi_enable=true
 else
     PRODUCT_PROPERTY_OVERRIDES += ro.rk.hdmi_enable=false
@@ -721,7 +752,7 @@ endif
 ########################################################
 # build without barrery
 ########################################################
-ifeq ($(strip $(BUILD_WITHOUT_BATTERY)), true)
+ifeq ($(strip $(BUILD_WITHOUT_BATTERY)),true)
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.factory.without_battery=true
 else
@@ -736,7 +767,7 @@ PRODUCT_PACKAGES += \
 #PRODUCT_PACKAGES += \
     librecovery_ui_$(TARGET_PRODUCT)
 
-ifeq ($(strip $(BOARD_BOOT_READAHEAD)), true)
+ifeq ($(strip $(BOARD_BOOT_READAHEAD)),true)
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/proprietary/readahead/readahead:$(TARGET_COPY_OUT_VENDOR)/sbin/readahead \
     $(LOCAL_PATH)/proprietary/readahead/readahead_list.txt:$(TARGET_COPY_OUT_VENDOR)/readahead_list.txt
@@ -748,7 +779,7 @@ PRODUCT_COPY_FILES += \
     $(OUT_DIR)/commit_id.xml:$(TARGET_COPY_OUT_VENDOR)/commit_id.xml
 endif
 
-ifeq ($(strip $(BOARD_CONNECTIVITY_MODULE)), ap6xxx_nfc)
+ifeq ($(strip $(BOARD_CONNECTIVITY_MODULE)),ap6xxx_nfc)
 #NFC packages
 PRODUCT_PACKAGES += \
     nfc_nci.$(TARGET_BOARD_HARDWARE) \
@@ -775,22 +806,22 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/nfc/libnfc-brcm-20791b04.conf:system/etc/libnfc-brcm-20791b04.conf \
     $(LOCAL_PATH)/nfc/libnfc-brcm-20791b05.conf:system/etc/libnfc-brcm-20791b05.conf \
     $(LOCAL_PATH)/nfc/libnfc-brcm-43341b00.conf:system/etc/libnfc-brcm-43341b00.conf \
-    $(call copyNfcFirmware, BCM20791B3_002.004.010.0161.0000_Generic_I2CLite_NCD_Signed_configdata.ncd) \
-    $(call copyNfcFirmware, BCM20791B3_002.004.010.0161.0000_Generic_PreI2C_NCD_Signed_configdata.ncd) \
-    $(call copyNfcFirmware, BCM20791B5_002.006.013.0011.0000_Generic_I2C_NCD_Unsigned_configdata.ncd) \
-    $(call copyNfcFirmware, BCM43341NFCB0_002.001.009.0021.0000_Generic_I2C_NCD_Signed_configdata.ncd) \
-    $(call copyNfcFirmware, BCM43341NFCB0_002.001.009.0021.0000_Generic_PreI2C_NCD_Signed_configdata.ncd)
+    $(call copyNfcFirmware,BCM20791B3_002.004.010.0161.0000_Generic_I2CLite_NCD_Signed_configdata.ncd) \
+    $(call copyNfcFirmware,BCM20791B3_002.004.010.0161.0000_Generic_PreI2C_NCD_Signed_configdata.ncd) \
+    $(call copyNfcFirmware,BCM20791B5_002.006.013.0011.0000_Generic_I2C_NCD_Unsigned_configdata.ncd) \
+    $(call copyNfcFirmware,BCM43341NFCB0_002.001.009.0021.0000_Generic_I2C_NCD_Signed_configdata.ncd) \
+    $(call copyNfcFirmware,BCM43341NFCB0_002.001.009.0021.0000_Generic_PreI2C_NCD_Signed_configdata.ncd)
 endif
 
 
 # incrementalfs config
-$(call inherit-product-if-exists, vendor/rockchip/common/modular_kernel/4.19/incrementalfs.mk)
+$(call inherit-product-if-exists,vendor/rockchip/common/modular_kernel/4.19/incrementalfs.mk)
 
-ifeq ($(strip $(BUILD_WITH_MICROSOFT_PLAYREADY)), true)
-$(call inherit-product-if-exists, vendor/microsoft/playready.mk)
+ifeq ($(strip $(BUILD_WITH_MICROSOFT_PLAYREADY)),true)
+$(call inherit-product-if-exists,vendor/microsoft/playready.mk)
 endif
 
-$(call inherit-product-if-exists, vendor/rockchip/common/device-vendor.mk)
+$(call inherit-product-if-exists,vendor/rockchip/common/device-vendor.mk)
 
 ########################################################
 # this product has support remotecontrol or not
@@ -810,15 +841,15 @@ endif
 
 #hdmi cec
 ifeq ($(BOARD_SUPPORT_HDMI_CEC),true)
-  $(call inherit-product, device/hardkernel/common/modules/hdmi_cec.mk)
+  $(call inherit-product,device/hardkernel/common/modules/hdmi_cec.mk)
 endif
 
-ifeq ($(strip $(BOARD_SHOW_HDMI_SETTING)), true)
+ifeq ($(strip $(BOARD_SHOW_HDMI_SETTING)),true)
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.vendor.hdmi_settings=true
 
 USE_PRODUCT_RESOLUTION_WHITE := $(shell test -f $(TARGET_DEVICE_DIR)/resolution_white.xml && echo true)
-ifeq ($(strip $(USE_PRODUCT_RESOLUTION_WHITE)), true)
+ifeq ($(strip $(USE_PRODUCT_RESOLUTION_WHITE)),true)
   PRODUCT_COPY_FILES += \
       $(TARGET_DEVICE_DIR)/resolution_white.xml:/system/usr/share/resolution_white.xml
 endif
@@ -837,7 +868,7 @@ endif
 PRODUCT_PACKAGES += \
 	abc
 
-ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)), vr)
+ifeq ($(strip $(TARGET_BOARD_PLATFORM_PRODUCT)),vr)
 PRODUCT_COPY_FILES += \
        device/hardkernel/common/lowmem_package_filter.xml:system/etc/lowmem_package_filter.xml 
 endif
@@ -854,7 +885,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.safemode.disabled=true
 endif
 
-#boot and shutdown animation, ringing
+#boot and shutdown animation,ringing
 ifeq ($(strip $(BOOT_SHUTDOWN_ANIMATION_RINGING)),true)
 include device/hardkernel/common/bootshutdown/bootshutdown.mk
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -867,7 +898,7 @@ ifeq ($(strip $(BOOT_VIDEO_ENABLE)),true)
 include device/hardkernel/common/bootvideo/bootvideo.mk
 endif
 
-ifeq ($(strip $(BOARD_ENABLE_PMS_MULTI_THREAD_SCAN)), true)
+ifeq ($(strip $(BOARD_ENABLE_PMS_MULTI_THREAD_SCAN)),true)
 PRODUCT_PROPERTY_OVERRIDES += \
 	ro.pms.multithreadscan=true		
 endif
@@ -909,7 +940,7 @@ PRODUCT_PACKAGES += \
 
 #######for target product ########
 
-# By default, enable zram; experiment can toggle the flag,
+# By default,enable zram; experiment can toggle the flag,
 # which takes effect on boot
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.zram_enabled=1
@@ -929,7 +960,7 @@ PRODUCT_PACKAGES += \
     modetest
 endif
 
-ifeq ($(strip $(BOARD_USB_ALLOW_DEFAULT_MTP)), true)
+ifeq ($(strip $(BOARD_USB_ALLOW_DEFAULT_MTP)),true)
 PRODUCT_PROPERTY_OVERRIDES += \
        ro.usb.default_mtp=true
 endif
@@ -961,7 +992,7 @@ ifeq ($(TARGET_BOARD_PLATFORM_PRODUCT),box)
     BOARD_FLASH_IMG_ENABLE := true
 endif
 #FLASH_IMG
-ifeq ($(strip $(BOARD_FLASH_IMG_ENABLE)), true)
+ifeq ($(strip $(BOARD_FLASH_IMG_ENABLE)),true)
     PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
         ro.flash_img.enable = true
 else
@@ -976,25 +1007,25 @@ PRODUCT_COPY_FILES += \
     device/hardkernel/common/pcie/read_pcie_info.sh:vendor/bin/read_pcie_info.sh
 
 BOARD_TV_LOW_MEMOPT ?= false
-ifeq ($(strip $(BOARD_TV_LOW_MEMOPT)), true)
+ifeq ($(strip $(BOARD_TV_LOW_MEMOPT)),true)
     include device/hardkernel/common/tv/tv_low_ram_device.mk
 endif
 
 # Camera support
 ifeq ($(BOARD_CAMERA_SUPPORT),true)
-$(call inherit-product, device/hardkernel/common/modules/camera.mk)
+$(call inherit-product,device/hardkernel/common/modules/camera.mk)
 endif
 
 # Rockchip HALs
-$(call inherit-product, device/hardkernel/common/manifests/frameworks/vintf.mk)
+$(call inherit-product,device/hardkernel/common/manifests/frameworks/vintf.mk)
 
 ifeq ($(BOARD_MEMTRACK_SUPPORT),true)
-$(call inherit-product, device/hardkernel/common/modules/memtrack.mk)
+$(call inherit-product,device/hardkernel/common/modules/memtrack.mk)
 endif
 
 ifeq ($(strip $(BOARD_HDMI_IN_SUPPORT))|$(strip $(BOARD_USES_LIBPQ)) ,true|true)
     #Build pq and iep lib
-    $(call inherit-product, hardware/rockchip/libpq/libpq.mk)
+    $(call inherit-product,hardware/rockchip/libpq/libpq.mk)
 
     #no afbc
     PRODUCT_PROPERTY_OVERRIDES += \
@@ -1030,7 +1061,7 @@ ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
 PRODUCT_PACKAGES += \
 	media-ctl \
 	v4l2-ctl
-ifneq (,$(filter rk356x rk3588 rk3562, $(strip $(TARGET_BOARD_PLATFORM))))
+ifneq (,$(filter rk356x rk3588 rk3562,$(strip $(TARGET_BOARD_PLATFORM))))
 PRODUCT_PACKAGES += \
 	rkaiq_tool_server \
 	rkaiq_demo \

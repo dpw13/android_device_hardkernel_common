@@ -22,7 +22,7 @@ ifdef BOARD_AVB_INIT_BOOT_KEY_PATH
 endif
 endif # BOARD_AVB_ENABLE
 
-ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \>= 4)))
+ifeq (true,$(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),4))
 str_addon := "/dev/block/by-name/init_boot /init_boot emmc defaults $(fstab_addon)first_stage_mount"
 else
 str_addon := none
@@ -81,8 +81,12 @@ $(INSTALLED_RK_VENDOR_FSTAB) : $(rebuild_fstab)
 	$(call copy-file-to-new-target-with-cp)
 
 # Header V3, add vendor_boot
-ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \>= 3)))
-INSTALLED_RK_RAMDISK_FSTAB := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_VENDOR_RAMDISK)/$(notdir $(rebuild_fstab))
+ifeq (true,$(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3))
+# TODO: see https://source.android.com/docs/core/architecture/partitions/generic-boot
+# fstab should go in <ramdisk>/first_stage_boot/<fstab> if there is no dedicated
+# recovery partition, but I don't know how to detect that.
+#INSTALLED_RK_RAMDISK_FSTAB := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_VENDOR_RAMDISK)/$(notdir $(rebuild_fstab))
+INSTALLED_RK_RAMDISK_FSTAB := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_VENDOR_RAMDISK)/first_stage_ramdisk/$(notdir $(rebuild_fstab))
 $(INSTALLED_RK_RAMDISK_FSTAB) : $(rebuild_fstab)
 	$(call copy-file-to-new-target-with-cp)
 else

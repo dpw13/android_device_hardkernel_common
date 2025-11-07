@@ -79,7 +79,7 @@ BOARD_PROPERTY_OVERRIDES_SPLIT_ENABLED ?= true
 
 DEVICE_MANIFEST_FILE ?= device/hardkernel/common/manifests/manifest_level_$(PRODUCT_SHIPPING_API_LEVEL).xml
 # TODO: this line appears to be causing `expr` syntax errors if inherit-product appears before it
-#ifeq (1,$(strip $(shell expr $(PRODUCT_SHIPPING_API_LEVEL) \>= 31)))
+#ifeq (true,$(call math_gt_or_eq,$(PRODUCT_SHIPPING_API_LEVEL),31)))
 # Android S deprecate schedulerservice, use ioprio in init.rc
 DEVICE_MATRIX_FILE   ?= device/hardkernel/common/manifests/compatibility_matrix_level_31.xml
 #else
@@ -151,7 +151,6 @@ BOARD_VNDK_VERSION := current
 
 # Recovery
 #TARGET_NO_RECOVERY ?= false
-TARGET_ROCHCHIP_RECOVERY ?= true
 
 # to flip screen in recovery
 BOARD_HAS_FLIPPED_SCREEN ?= false

@@ -30,7 +30,7 @@ ifneq ($(BOARD_SELINUX_ENFORCING), true)
 ROCKCHIP_ANDROID_BOOT_CMDLINE += androidboot.selinux=permissive
 endif
 
-ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \<= 3)))
+ifeq (true,$(call math_lt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3))
 BOARD_KERNEL_CMDLINE += $(ROCKCHIP_ANDROID_BOOT_CMDLINE)
 else # Boot header 4 requires bootconfig
 BOARD_BOOTCONFIG := $(ROCKCHIP_ANDROID_BOOT_CMDLINE)
@@ -44,7 +44,7 @@ endif
 # odroid board doesn't use resource.img
 # For Header V2, set resource.img as second.
 # For Header V3, add vendor_boot and resource.
-ifeq (1,$(strip $(shell expr $(BOARD_BOOT_HEADER_VERSION) \<= 2)))
+ifeq (true,$(call math_lt_or_eq,$(BOARD_BOOT_HEADER_VERSION),2))
 ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
 BOARD_MKBOOTIMG_ARGS += --second $(TARGET_PREBUILT_RESOURCE)
 endif
