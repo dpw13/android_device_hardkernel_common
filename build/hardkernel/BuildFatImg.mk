@@ -8,8 +8,9 @@ source_dir := $(intermediates)/fat
 build_fat_img := $(intermediates)/fat.img
 build_boot_scr := $(PRODUCT_OUT)/boot.scr
 boot_logo_bmp := $(PRODUCT_OUT)/boot-logo.bmp.gz
+config_ini := $(TARGET_OUT_VENDOR)/etc/config.ini.template
 
-dtb_target_file := $(shell echo $(PRODUCT_KERNEL_DTS) | sed s/"-android"//g)
+dtb_target_file := $(PRODUCT_KERNEL_DTS)
 
 target_partition_size := 19456
 
@@ -27,6 +28,7 @@ $(build_fat_img) : $(build_boot_scr) $(boot_logo_bmp) $(INSTALLED_DTBIMAGE_TARGE
 	$(AOSP_FAT16COPY) $(build_fat_img) \
 		$(build_boot_scr) \
 		$(boot_logo_bmp) \
+		$(config_ini) \
 		$(source_dir)/rockchip
 
 INSTALLED_HK_FAT_IMAGE := $(PRODUCT_OUT)/$(notdir $(build_fat_img))

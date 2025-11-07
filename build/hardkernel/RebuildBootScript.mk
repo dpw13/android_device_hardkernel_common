@@ -7,7 +7,7 @@ recovery_part := 7
 wifi_country := US
 mtd := "sfc_nor:0x20000@0xe0000(env),0x200000@0x100000(uboot),0x100000@0x300000(splash),0xc00000@0x400000(firmware)"
 target_board := $(PRODUCT_DEVICE)
-target_dtb := $(shell echo $(PRODUCT_KERNEL_DTS) | sed s/"-android"//g)
+target_dtb := $(PRODUCT_KERNEL_DTS)
 emmc_boot_device := $(PRODUCT_BOOT_DEVICE)
 sd_boot_device := $(PRODUCT_SDMMC_DEVICE)
 
