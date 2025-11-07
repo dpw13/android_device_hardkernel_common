@@ -265,7 +265,6 @@ on property:sys.boot_completed=1
     start gpsd
     trigger sys-boot-completed-set
     setprop vendor.boot_completed 1
-    start makebootini
     start boblight
 
 # We want one opportunity per boot to enable zram, so we
@@ -385,12 +384,14 @@ on property:vendor.flash.success=2
 on property:flash.success=1
    setprop vendor.flash.success 1
 
-service makebootini /vendor/bin/makebootini
-    class core
-    user root
-    group root
-    disabled
-    oneshot
+# makebootini was here. It:
+# copied /vendor/etc/config.ini.template /fat/config.ini
+# copied /vendor/etc/boot.scr /fat/boot.scr
+# set display density with `wm density nnn`
+# and optionally rebooted after copying /storage/emulated/0/.config.ini.backup /fat/config.ini
+#
+# We don't want to do any of those things. Instead set everything
+# properly during build time.
 
 service boblight /vendor/bin/boblight
     class core
