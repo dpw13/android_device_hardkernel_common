@@ -14,22 +14,21 @@ dtb_target_file := $(PRODUCT_KERNEL_DTS)
 
 target_partition_size := 19456
 
-MKFS_FAT= device/hardkernel/proprietary/bin/mkfs.fat
-AOSP_FAT16COPY := build/make/tools/fat16copy.py
+# TODO: move to mformat (not symlinked) or newfs_msdos (not getting installed for host?)
+MKFS_FAT := device/hardkernel/proprietary/bin/mkfs.fat
+MCOPY := $(HOST_OUT_EXECUTABLES)/mcopy
 
-$(build_fat_img) : $(build_boot_scr) $(boot_logo_bmp) $(INSTALLED_DTBIMAGE_TARGET) $(INSTALLED_DTBOIMAGE_TARGET)
-	@echo "Build dtb image file $@."
+$(build_fat_img) : $(build_boot_scr) $(boot_logo_bmp) $(INSTALLED_DTBIMAGE_TARGET) $(INSTALLED_DTBOIMAGE_TARGET) $(MCOPY)
+	@echo "Build FAT16 image file $@."
 	dd if=/dev/zero of=$(build_fat_img) bs=1024 count=$(target_partition_size)
 	$(MKFS_FAT) -F16 -n VFAT $(build_fat_img)
 	mkdir -p $(source_dir)/rockchip
 	cp $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/$(PRODUCT_DTB_TARGET) $(source_dir)/rockchip/$(dtb_target_file).dtb
 	mkdir -p $(source_dir)/rockchip/overlays/$(PRODUCT_DEVICE)
 	cp $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/$(PRODUCT_DTBO_TARGET) $(source_dir)/rockchip/overlays/$(PRODUCT_DEVICE)
-	$(AOSP_FAT16COPY) $(build_fat_img) \
-		$(build_boot_scr) \
-		$(boot_logo_bmp) \
-		$(config_ini) \
-		$(source_dir)/rockchip
+	cp $(build_boot_scr) $(boot_logo_bmp) $(source_dir)
+	cp $(config_ini) $(source_dir)/config.ini
+	$(MCOPY) -i $(build_fat_img) -s $(source_dir)/* ::
 
 INSTALLED_HK_FAT_IMAGE := $(PRODUCT_OUT)/$(notdir $(build_fat_img))
 $(INSTALLED_HK_FAT_IMAGE) : $(build_fat_img)

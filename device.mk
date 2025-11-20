@@ -311,6 +311,10 @@ PRODUCT_PACKAGES += \
     libwifi-hal-package \
     dhcpcd.conf
 
+# For building FAT16 partition
+PRODUCT_HOST_PACKAGES += \
+    mtools
+
 # Wifi&Bluetooth
 include device/hardkernel/common/wifi_bt_common.mk
 
