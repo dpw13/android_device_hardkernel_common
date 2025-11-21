@@ -18,7 +18,9 @@ target_partition_size := 19456
 MKFS_FAT := device/hardkernel/proprietary/bin/mkfs.fat
 MCOPY := $(HOST_OUT_EXECUTABLES)/mcopy
 
-$(build_fat_img) : $(build_boot_scr) $(boot_logo_bmp) $(INSTALLED_DTBIMAGE_TARGET) $(INSTALLED_DTBOIMAGE_TARGET) $(MCOPY)
+# INSTALLED_DTB_TARGET should be $(PRODUCT_OUT)/dtb.img but it looks like the Makefile isn't
+# getting access to that variable here, so explicitly depend on the DTB and kernel files.
+$(build_fat_img) : $(build_boot_scr) $(boot_logo_bmp) $(PRODUCT_OUT)/dtb.img $(PRODUCT_OUT)/kernel $(MCOPY)
 	@echo "Build FAT16 image file $@."
 	dd if=/dev/zero of=$(build_fat_img) bs=1024 count=$(target_partition_size)
 	$(MKFS_FAT) -F16 -n VFAT $(build_fat_img)
