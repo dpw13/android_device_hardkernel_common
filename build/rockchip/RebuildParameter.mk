@@ -17,7 +17,10 @@ endif # TARGET_BOARD_HARDWARE
 ifeq ($(strip $(BOARD_USES_AB_IMAGE)), true)
   # Header V3, add vendor_boot and resource.
   ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3),)
-    partition_list := $(partition_list),resource_a:$(BOARD_RESOURCEIMAGE_PARTITION_SIZE),vendor_boot_a:$(BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE)
+    ifneq ($(strip $(TARGET_PREBUILT_RESOURCE)),)
+      partition_list := $(partition_list),resource_a:$(BOARD_RESOURCEIMAGE_PARTITION_SIZE)
+    endif
+    partition_list := $(partition_list),vendor_boot_a:$(BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE)
     ifneq ($(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),4),)
       partition_list := $(partition_list),init_boot_a:$(BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE)
     endif # Header V4

@@ -65,7 +65,10 @@ else # arm64
   BOARD_KERNEL_IMAGE_NAME ?= Image.gz
 endif
 
+ifneq ($(strip $(TARGET_BOARD_HARDWARE)), odroid)
+# Odroid does not use resource partition
 TARGET_PREBUILT_RESOURCE ?= $(TARGET_KERNEL_SOURCE)/resource.img
+endif
 PRODUCT_PARAMETER_TEMPLATE ?= device/hardkernel/common/scripts/parameter_tools/parameter.in
 PRODUCT_BOOTSCRIPT_TEMPLATE ?= device/hardkernel/common/scripts/bootscript_tools/bootscript.in
 PRODUCT_BOOTSCRIPT_INI_DTB_TEMPLATE := device/hardkernel/common/scripts/bootscript_tools/bootscript_dtb_ini.in

@@ -253,6 +253,26 @@ endif # tablet without GMS-Express
 
 endif
 
+# Virtual A/B
+# TODO: disable for now and control directly from product definition
+#ifeq ($(strip $(BOARD_ROCKCHIP_VIRTUAL_AB_ENABLE)),true)
+#  ifeq ($(strip $(BOARD_ROCKCHIP_VIRTUAL_AB_COMPRESSION)),true)
+#    ifeq (true,$(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3))
+#      $(call inherit-product, \
+#          $(SRC_TARGET_DIR)/product/virtual_ab_ota/compression_with_xor.mk)
+#    else
+#      $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
+#      $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/compression_retrofit.mk)
+#    endif
+#  else
+#    $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
+#  endif
+#endif
+#
+#ifeq ($(strip $(BOARD_USES_VIRTUAL_AB_RETROFIT)),true)
+#  $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota_retrofit.mk)
+#endif
+
 # PCBA tools
 #$(call inherit-product,device/hardkernel/common/modules/pcba.mk)
 # Optee

@@ -29,6 +29,9 @@ def generate_pt(pt_name: str, pt_size: str, pt_start: int):
         part_size = '-'
         return "-@" + part_start + "(userdata:grow)"
 
+    if not pt_size:
+        raise ValueError(f"Partition {pt_name} must have a size definition")
+
     part_size = "{:#010x}".format(calculate_blocks(pt_size))
     result = part_size + "@" + part_start + "(" + pt_name + ")"
     return result, int(calculate_blocks(pt_size) + pt_start)

@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-ifeq ($(strip $(BOARD_USES_AB_IMAGE)), true)
 PRODUCT_PACKAGES += \
     update_engine \
     update_verifier	\
@@ -29,71 +28,15 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     update_engine_client
 
-# Uboot does not belong here as (currently) the SPL is not slot aware
-# TODO: verify that
-AB_OTA_PARTITIONS += \
-    boot \
-    system	\
-    vendor	\
-    odm
-
-ifneq ($(strip $(BOARD_ROCKCHIP_TRUST_MERGE_TO_UBOOT)),true)
-AB_OTA_PARTITIONS += \
-    trust
-endif
-
-ifeq ($(strip $(BOARD_AVB_ENABLE)),true)
-AB_OTA_PARTITIONS += \
-    vbmeta
-endif
-
-ifndef BOARD_USES_AB_LEGACY_RETROFIT
-AB_OTA_PARTITIONS += \
-    system_dlkm \
-    system_ext \
-    vendor_dlkm \
-    odm_dlkm \
-    product
-endif
-
-ifeq (true,$(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3))
-# NOTE: Resource partition used for AVB, rockchip specific?
-AB_OTA_PARTITIONS += \
-    vendor_boot
-
-ifeq (true,$(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),4))
-AB_OTA_PARTITIONS += \
-    init_boot
-endif
-
-endif
 # Boot control HAL
 PRODUCT_PACKAGES += \
     android.hardware.boot@1.2-service \
     android.hardware.boot@1.2-impl-rockchip \
     android.hardware.boot@1.2-impl-rockchip.recovery
 
-ifeq ($(strip $(BOARD_ROCKCHIP_VIRTUAL_AB_ENABLE)),true)
-ifeq ($(strip $(BOARD_ROCKCHIP_VIRTUAL_AB_COMPRESSION)),true)
-ifeq (true,$(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3))
-$(call inherit-product, \
-    $(SRC_TARGET_DIR)/product/virtual_ab_ota/compression_with_xor.mk)
-else
-$(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/compression_retrofit.mk)
-endif
-else
-$(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
-endif
-endif
-
-ifeq ($(strip $(BOARD_USES_VIRTUAL_AB_RETROFIT)),true)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota_retrofit.mk)
-endif
-
 PRODUCT_PACKAGES += \
-  bootctrl.odroid \
-  bootctrl.odroid.recovery
+    bootctrl.odroid \
+    bootctrl.odroid.recovery
 
 PRODUCT_PACKAGES_DEBUG += \
     bootctl
@@ -107,7 +50,15 @@ AB_OTA_POSTINSTALL_CONFIG += \
     POSTINSTALL_PATH_system=system/bin/otapreopt_script \
     FILESYSTEM_TYPE_system=ext4 \
     POSTINSTALL_OPTIONAL_system=true
+
+# Always use header v2 for recovery image,
+# - header v4 is using bootconfig, always override cmdline in recovery;
+# - header v3+ is used for virtual A/B and GKI;
+# - header v2 used for the device with recovery;
+ifneq ($(strip $(TARGET_PREBUILT_RESOURCE)),)
+  BOARD_RECOVERY_MKBOOTIMG_ARGS ?= --second $(TARGET_PREBUILT_RESOURCE) \
+      --header_version 2 \
+      --cmdline "$(BOARD_KERNEL_CMDLINE) $(ROCKCHIP_ANDROID_BOOT_CMDLINE)"
 else
-PRODUCT_PACKAGES += \
-    applypatch
+  BOARD_RECOVERY_MKBOOTIMG_ARGS ?= --header_version 2
 endif

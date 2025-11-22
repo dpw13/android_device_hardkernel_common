@@ -77,34 +77,36 @@ $(rebuild_fstab) : $(PRODUCT_FSTAB_TEMPLATE) $(ROCKCHIP_FSTAB_TOOLS)
 	-o $(rebuild_fstab)
 
 INSTALLED_RK_VENDOR_FSTAB := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_VENDOR)/etc/$(notdir $(rebuild_fstab))
-$(INSTALLED_RK_VENDOR_FSTAB) : $(rebuild_fstab)
-	$(call copy-file-to-new-target-with-cp)
 
 # Header V3, add vendor_boot
 ifeq (true,$(call math_gt_or_eq,$(BOARD_BOOT_HEADER_VERSION),3))
-# TODO: see https://source.android.com/docs/core/architecture/partitions/generic-boot
-# fstab should go in <ramdisk>/first_stage_boot/<fstab> if there is no dedicated
-# recovery partition, but I don't know how to detect that.
-#INSTALLED_RK_RAMDISK_FSTAB := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_VENDOR_RAMDISK)/$(notdir $(rebuild_fstab))
-INSTALLED_RK_RAMDISK_FSTAB := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_VENDOR_RAMDISK)/first_stage_ramdisk/$(notdir $(rebuild_fstab))
-$(INSTALLED_RK_RAMDISK_FSTAB) : $(rebuild_fstab)
-	$(call copy-file-to-new-target-with-cp)
+  BOOT_FSTAB_TARGET_RAMDISK := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_VENDOR_RAMDISK)
 else
-INSTALLED_RK_RAMDISK_FSTAB := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_RAMDISK)/$(notdir $(rebuild_fstab))
-$(INSTALLED_RK_RAMDISK_FSTAB) : $(rebuild_fstab)
-	$(call copy-file-to-new-target-with-cp)
+  BOOT_FSTAB_TARGET_RAMDISK := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_RAMDISK)
 endif
 
-ifeq ($(strip $(BOARD_USES_AB_IMAGE)), true)
-INSTALLED_RK_RECOVERY_FIRST_STAGE_FSTAB := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_RECOVERY)/root/first_stage_ramdisk/$(notdir $(rebuild_fstab))
+ifneq ($(strip $(TARGET_NO_RECOVERY)), true)
+  # Dedicated recovery
+  INSTALLED_RK_RECOVERY_FIRST_STAGE_FSTAB := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_RECOVERY)/root/$(notdir $(rebuild_fstab))
+  ALL_DEFAULT_INSTALLED_MODULES += $(INSTALLED_RK_RECOVERY_FIRST_STAGE_FSTAB)
+
+  INSTALLED_RK_RAMDISK_FSTAB := $(BOOT_FSTAB_TARGET_RAMDISK)/$(notdir $(rebuild_fstab))
+else
+  # TODO: see https://source.android.com/docs/core/architecture/partitions/generic-boot
+  # fstab should go in <ramdisk>/first_stage_boot/<fstab> if there is no dedicated
+  # recovery partition
+  INSTALLED_RK_RAMDISK_FSTAB := $(BOOT_FSTAB_TARGET_RAMDISK)/first_stage_ramdisk/$(notdir $(rebuild_fstab))
+endif # TARGET_NO_RECOVERY
+
+$(INSTALLED_RK_VENDOR_FSTAB) : $(rebuild_fstab)
+	$(call copy-file-to-new-target-with-cp)
+
 $(INSTALLED_RK_RECOVERY_FIRST_STAGE_FSTAB) : $(rebuild_fstab)
 	$(call copy-file-to-new-target-with-cp)
-endif # BOARD_USES_AB_IMAGE
+
+$(INSTALLED_RK_RAMDISK_FSTAB) : $(rebuild_fstab)
+	$(call copy-file-to-new-target-with-cp)
 
 ALL_DEFAULT_INSTALLED_MODULES += $(INSTALLED_RK_VENDOR_FSTAB) $(INSTALLED_RK_RAMDISK_FSTAB)
-
-ifeq ($(strip $(BOARD_USES_AB_IMAGE)), true)
-ALL_DEFAULT_INSTALLED_MODULES += $(INSTALLED_RK_RECOVERY_FIRST_STAGE_FSTAB)
-endif
 
 endif
